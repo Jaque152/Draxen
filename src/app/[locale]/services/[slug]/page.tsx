@@ -130,7 +130,7 @@ export default async function PlanDetailPage({
                     {isEs ? 'Pago 100% seguro y encriptado.' : '100% secure and encrypted payment.'}
                   </p>
                   <p className="text-xs text-[var(--cream)]/30">
-                    Powered by Keycop
+                    Powered by Etomin
                   </p>
                 </div>
               </div>

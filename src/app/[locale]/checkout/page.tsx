@@ -112,20 +112,87 @@ export default function CheckoutContent() {
               </div>
             </div>
 
-            {/* Tarjeta */}
+            {/* Tarjeta Crédito/Débito */}
             <div className="bg-card p-8 border border-border rounded-2xl shadow-lg relative overflow-hidden">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-3 text-foreground">
-                <CreditCard className="text-primary w-5 h-5" /> Tarjeta de Crédito/Débito
-              </h2>
-              <div className="grid gap-5 max-w-md relative z-10">
-                <Input placeholder="Número de tarjeta *" required maxLength={19} value={cardInfo.number} onChange={(e)=>setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '')})} className={inputClass} />
-                <Input placeholder="Nombre en la tarjeta *" required value={cardInfo.name} onChange={(e)=>setCardInfo({...cardInfo, name: e.target.value.toUpperCase()})} className={inputClass} />
-                <div className="grid grid-cols-2 gap-5">
-                  <Input placeholder="MM/AA *" required maxLength={5} value={cardInfo.expiry} onChange={handleExpiryChange} className={inputClass} />
-                  <Input placeholder="CVV *" type="password" required maxLength={4} value={cardInfo.cvv} onChange={(e)=>setCardInfo({...cardInfo, cvv: e.target.value.replace(/\D/g, '')})} className={inputClass} />
+              
+              {/* Decoración de fondo */}
+              <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                <CreditCard className="w-40 h-40" />
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <h2 className="text-xl font-bold flex items-center gap-3 text-foreground">
+                    <CreditCard className="text-primary w-5 h-5" /> 
+                    {locale === 'es' ? 'Método de Pago' : 'Payment Method'}
+                  </h2>
+                  
+                  {/* Logo de Etomin dinámico */}
+                  <div className="flex flex-col items-end">
+                    <div className="h-6 opacity-80">
+                      <img 
+                        src="/etomin_logo.svg" 
+                        alt="Powered by Etomin" 
+                        className="h-full w-auto object-contain brightness-0 invert" // Filtro para que se vea blanco en fondo oscuro
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 mt-2 text-muted-foreground text-xs font-sans">
-                  <ShieldCheck className="w-4 h-4 text-secondary" /> Pagos seguros y encriptados.
+                  
+                <div className="grid gap-5 max-w-md">
+                  <Input 
+                    placeholder="Número de tarjeta *" 
+                    required 
+                    maxLength={19} 
+                    value={cardInfo.number} 
+                    onChange={(e)=>setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '')})} 
+                    className={inputClass + " font-mono text-lg tracking-widest"} 
+                  />
+                  
+                  <Input 
+                    placeholder="Nombre en la tarjeta *" 
+                    required 
+                    value={cardInfo.name} 
+                    onChange={(e)=>setCardInfo({...cardInfo, name: e.target.value.toUpperCase()})} 
+                    className={inputClass} 
+                  />
+
+                  <div className="grid grid-cols-2 gap-5">
+                    <Input 
+                      placeholder="MM/AA *" 
+                      required 
+                      maxLength={5} 
+                      value={cardInfo.expiry} 
+                      onChange={handleExpiryChange} 
+                      className={inputClass + " text-center"} 
+                    />
+                    <Input 
+                      placeholder="CVV *" 
+                      type="password" 
+                      required 
+                      maxLength={4} 
+                      value={cardInfo.cvv} 
+                      onChange={(e)=>setCardInfo({...cardInfo, cvv: e.target.value.replace(/\D/g, '')})} 
+                      className={inputClass + " text-center tracking-widest"} 
+                    />
+                  </div>
+
+                  {/* Logos de Pago Seguro y Marcas de Tarjetas */}
+                  <div className="mt-4 pt-4 border-t border-border/50">
+                    <div className="h-10 flex items-center">
+                      <img 
+                        src="/etomin_secbadge.svg" 
+                        alt="Secure Payment Gateways" 
+                        className="h-full w-auto object-contain opacity-90 grayscale hover:grayscale-0 transition-all duration-500" 
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter mt-3 flex items-center gap-2">
+                      <ShieldCheck className="w-3 h-3 text-secondary" />
+                      {locale === 'es' 
+                        ? 'Tus datos están protegidos y encriptados de extremo a extremo.' 
+                        : 'Your data is protected and encrypted end-to-end.'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

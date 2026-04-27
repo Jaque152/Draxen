@@ -3,24 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 
-interface TProps {
-  children: string;
-}
-
-export function T({ children }: TProps) {
+export function T({ children }: { children: string }) {
   const locale = useLocale();
   const [translated, setTranslated] = useState(children);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (locale === 'es') {
+    if (!children || locale === 'es') {
       setTranslated(children);
       return;
     }
 
     async function fetchTranslation() {
       setLoading(true);
-      console.log("🔍 Intentando traducir:", children, "al idioma:", locale);
       try {
         const res = await fetch('/api/translate', {
           method: 'POST',
@@ -28,10 +23,9 @@ export function T({ children }: TProps) {
           body: JSON.stringify({ text: children, targetLang: locale }),
         });
         const data = await res.json();
-        console.log("✅ Respuesta recibida:", data);
         setTranslated(data.translated);
       } catch (e) {
-        console.error("❌ Error de traducción:", e);
+        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -41,7 +35,7 @@ export function T({ children }: TProps) {
   }, [children, locale]);
 
   return (
-    <span className={loading ? "opacity-50 transition-opacity" : "transition-opacity"}>
+    <span className={loading ? "opacity-50 animate-pulse" : ""}>
       {translated}
     </span>
   );

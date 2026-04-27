@@ -4,11 +4,11 @@ import { ClientBody } from "@/components/shared/ClientBody";
 import { Navigation } from "@/components/shared/Navigation";
 import { Footer } from "@/components/shared/Footer";
 
+// Mantenemos el Provider para el contexto, pero quitamos getMessages
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
 
 export const metadata: Metadata = {
-  title: "Marketing Resultados- Creative Marketing Agency",
+  title: "Ninja Creatives - Creative Marketing Agency",
   description: "A marketing agency focused on helping businesses grow with disruptive communication, strategic events, and targeted strategies.",
   icons: {
     icon: "/favicon.ico",
@@ -22,11 +22,8 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-
+  // 1. En Next.js 15 siempre esperamos los params
   const { locale } = await params;
-  
-
-  const messages = await getMessages();
 
   return (
     <html lang={locale} className="scroll-smooth">
@@ -39,7 +36,8 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col">
-        <NextIntlClientProvider messages={messages}>
+        {/* 2. Pasamos un objeto vacío a messages ya que usaremos el componente <T /> */}
+        <NextIntlClientProvider locale={locale} messages={{}}>
           <ClientBody>
             <Navigation />
             <main className="flex-grow">
