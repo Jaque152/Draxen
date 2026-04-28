@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { T } from "@/components/shared/T";
 import { ArrowRight } from 'lucide-react';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
@@ -22,8 +23,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </span>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold font-serif leading-[1.1] text-[var(--cream)] mb-8">
-              Estrategias <br />
-              <span className="text-gradient">Dirigidas.</span>
+              <T>Estrategias</T> <br />
+              <span className="text-gradient"><T>Dirigidas.</T></span>
             </h1>
             
             <p className="text-xl md:text-2xl text-[var(--cream)]/60 font-sans mb-12 max-w-2xl leading-relaxed">

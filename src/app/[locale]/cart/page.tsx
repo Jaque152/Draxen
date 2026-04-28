@@ -6,7 +6,6 @@ import { useCart } from '@/hooks/use-cart';
 import { Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/types';
-import { ClientT } from '@/components/shared/ClientT';
 
 export default function CartPage() {
   const { items, total, removeFromCart } = useCart();
@@ -15,7 +14,6 @@ export default function CartPage() {
   const formatPrice = (price: number) => 
     new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(price);
 
-  // PANTALLA DE CARRITO VACÍO
   if (items.length === 0) {
     return (
       <main className="min-h-screen bg-background bg-grain pt-32 pb-24 flex items-center justify-center px-4 relative">
@@ -41,7 +39,6 @@ export default function CartPage() {
     );
   }
 
-  // PANTALLA CON ITEMS
   return (
     <main className="min-h-screen bg-background bg-grain pt-32 pb-24 text-foreground relative">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
@@ -50,11 +47,8 @@ export default function CartPage() {
         </h1>
 
         <div className="grid lg:grid-cols-12 gap-10 items-start">
-          
-          {/* LISTA DE ITEMS */}
           <div className="lg:col-span-8 space-y-4">
             <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
-              {/* Encabezados (Solo visible en Desktop) */}
               <div className="hidden md:grid grid-cols-12 gap-4 p-6 border-b border-border text-sm font-bold text-muted-foreground uppercase tracking-wider">
                 <div className="col-span-6">{locale === 'es' ? 'Servicio' : 'Service'}</div>
                 <div className="col-span-2 text-center">{locale === 'es' ? 'Cantidad' : 'Quantity'}</div>
@@ -62,7 +56,6 @@ export default function CartPage() {
                 <div className="col-span-1"></div>
               </div>
 
-              {/* Items del Carrito */}
               <div className="divide-y divide-border">
                 {items.map((item: CartItem) => {
                   const itemPrice = item.custom_price !== null 
@@ -71,15 +64,10 @@ export default function CartPage() {
 
                   return (
                     <div key={item.id} className="p-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                      
-                      {/* Info del Plan */}
                       <div className="col-span-1 md:col-span-6">
                         <h3 className="font-bold text-lg text-foreground mb-1">
-                          {item.plans_nc?.title ? (
-                            <ClientT>{item.plans_nc.title}</ClientT>
-                          ) : (
-                            locale === 'es' ? 'Estrategia Personalizada' : 'Custom Strategy'
-                          )}
+                          {/* VUELVE A LA NORMALIDAD AQUÍ TAMBIÉN */}
+                          {item.plans_nc?.title || (locale === 'es' ? 'Estrategia Personalizada' : 'Custom Strategy')}
                         </h3>
                         {item.quote_id && (
                           <span className="inline-block bg-primary/10 text-primary text-xs px-2 py-1 rounded font-mono">
@@ -88,19 +76,16 @@ export default function CartPage() {
                         )}
                       </div>
 
-                      {/* Cantidad */}
                       <div className="col-span-1 md:col-span-2 md:text-center text-muted-foreground">
                         <span className="md:hidden font-bold mr-2">{locale === 'es' ? 'Cantidad:' : 'Quantity:'}</span> 
                         {item.quantity}
                       </div>
 
-                      {/* Precio */}
                       <div className="col-span-1 md:col-span-3 md:text-right font-bold text-lg">
                         <span className="md:hidden font-bold text-muted-foreground font-normal mr-2">{locale === 'es' ? 'Precio:' : 'Price:'}</span>
                         {formatPrice(itemPrice * item.quantity)}
                       </div>
 
-                      {/* Botón Eliminar */}
                       <div className="col-span-1 md:col-span-1 flex md:justify-end mt-4 md:mt-0">
                         <button 
                           onClick={() => removeFromCart(item.id)}
@@ -117,7 +102,6 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* RESUMEN DEL PEDIDO */}
           <div className="lg:col-span-4 bg-card p-8 border border-border rounded-2xl shadow-lg sticky top-32">
             <h2 className="text-xl font-bold mb-6 border-b border-border pb-4">
               {locale === 'es' ? 'Resumen del Pedido' : 'Order Summary'}
@@ -151,7 +135,6 @@ export default function CartPage() {
               </Link>
             </div>
           </div>
-
         </div>
       </div>
     </main>

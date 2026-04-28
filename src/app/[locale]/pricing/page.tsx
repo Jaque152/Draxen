@@ -13,6 +13,8 @@ export default function CustomPricingPage() {
   const { addToCart } = useCart();
   const router = useRouter();
   const locale = useLocale();
+  const isEs = locale === 'es';
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
@@ -28,7 +30,7 @@ export default function CustomPricingPage() {
     e.preventDefault();
     
     if (formData.monto <= 0) {
-      setErrorMsg("El monto calculado debe ser mayor a cero.");
+      setErrorMsg(isEs ? "El monto calculado debe ser mayor a cero." : "The calculated amount must be greater than zero.");
       return;
     }
 
@@ -55,12 +57,12 @@ export default function CustomPricingPage() {
       if (added) {
         router.push(`/${locale}/checkout`);
       } else {
-        setErrorMsg("Error al sincronizar con el carrito de compras.");
+        setErrorMsg(isEs ? "Error al sincronizar con el carrito de compras." : "Error syncing with the shopping cart.");
         setIsSubmitting(false);
       }
 
     } else {
-      setErrorMsg(res.message || "Error al procesar el plan personalizado.");
+      setErrorMsg(res.message || (isEs ? "Error al procesar el plan personalizado." : "Error processing the custom plan."));
       setIsSubmitting(false);
     }
   };
@@ -72,8 +74,14 @@ export default function CustomPricingPage() {
       <div className="container mx-auto px-4 max-w-2xl relative z-10">
         
         <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">Crea tu Estrategia</h1>
-          <p className="text-muted-foreground">Ingresa tu folio de cotización y completa tus datos para proceder al pago.</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
+            {isEs ? 'Crea tu Estrategia' : 'Create Your Strategy'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEs 
+              ? 'Ingresa tu folio de cotización y completa tus datos para proceder al pago.' 
+              : 'Enter your quote reference and complete your details to proceed to payment.'}
+          </p>
         </div>
 
         {errorMsg && (
@@ -85,14 +93,14 @@ export default function CustomPricingPage() {
         <form onSubmit={handleSubmit} className="bg-card p-8 md:p-12 border border-border rounded-2xl shadow-lg space-y-6">
           <div className="grid sm:grid-cols-2 gap-6">
             <Input 
-              placeholder="Nombre *" 
+              placeholder={isEs ? "Nombre *" : "First Name *"} 
               required 
               value={formData.nombre} 
               onChange={(e) => setFormData({...formData, nombre: e.target.value})} 
               className={inputClass} 
             />
             <Input 
-              placeholder="Apellidos *" 
+              placeholder={isEs ? "Apellidos *" : "Last Name *"} 
               required 
               value={formData.apellidos} 
               onChange={(e) => setFormData({...formData, apellidos: e.target.value})} 
@@ -101,7 +109,7 @@ export default function CustomPricingPage() {
           </div>
           
           <Input 
-            placeholder="Correo Electrónico *" 
+            placeholder={isEs ? "Correo Electrónico *" : "Email Address *"} 
             type="email" 
             required 
             value={formData.correo_electronico} 
@@ -109,9 +117,8 @@ export default function CustomPricingPage() {
             className={inputClass} 
           />
 
-          {/* 2. Campo para el Folio de Cotización */}
           <Input 
-            placeholder="Folio de Cotización (Ej. COT-1234) *" 
+            placeholder={isEs ? "Folio de Cotización (Ej. COT-1234) *" : "Quote Reference (e.g. COT-1234) *"} 
             required 
             value={formData.id_cotizacion} 
             onChange={(e) => setFormData({...formData, id_cotizacion: e.target.value.toUpperCase()})} 
@@ -119,7 +126,9 @@ export default function CustomPricingPage() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">Presupuesto Acordado (MXN) *</label>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              {isEs ? 'Presupuesto Acordado (MXN) *' : 'Agreed Budget (MXN) *'}
+            </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
               <Input 
@@ -143,7 +152,7 @@ export default function CustomPricingPage() {
               <Loader2 className="animate-spin w-5 h-5 mx-auto" />
             ) : (
               <span className="flex items-center gap-2">
-                <Calculator className="w-5 h-5"/> Añadir al Carrito
+                <Calculator className="w-5 h-5"/> {isEs ? 'Añadir al Carrito' : 'Add to Cart'}
               </span>
             )}
           </Button>

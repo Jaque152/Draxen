@@ -13,6 +13,7 @@ import { CartItem, CheckoutPayload } from "@/types";
 export default function CheckoutContent() {
   const { items, total, clearCart } = useCart();
   const locale = useLocale();
+  const isEs = locale === 'es';
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -46,14 +47,13 @@ export default function CheckoutContent() {
 
     if (res.success) {
       clearCart();
-      // LIMPIEZA DE ESTADOS
       setContactInfo({ firstName: "", lastName: "", email: "", phone: "" });
       setBillingInfo({ pais: "México", direccion: "", localidad: "", estado: "", codigo_postal: "" });
       setCardInfo({ number: "", name: "", expiry: "", cvv: "" });
       setShowSuccess(true);
       window.scrollTo(0, 0);
     } else {
-      setErrorMsg(res.message || "Ocurrió un error al procesar el pago.");
+      setErrorMsg(res.message || (isEs ? "Ocurrió un error al procesar el pago." : "An error occurred while processing the payment."));
       setIsProcessing(false);
     }
   };
@@ -67,7 +67,6 @@ export default function CheckoutContent() {
 
   const inputClass = "h-14 bg-input border border-border focus-visible:ring-1 focus-visible:ring-ring rounded-lg px-5 text-foreground placeholder:text-muted-foreground transition-all w-full";
 
-  // PANTALLA DE ÉXITO EXCLUSIVA
   if (showSuccess) {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center px-4 relative">
@@ -77,44 +76,47 @@ export default function CheckoutContent() {
             <CheckCircle className="w-12 h-12 text-primary" />
           </div>
           <h1 className="text-4xl font-bold mb-4 text-foreground font-serif tracking-tight">
-            {locale === 'es' ? '¡Estrategia Confirmada!' : 'Strategy Confirmed!'}
+            {isEs ? '¡Estrategia Confirmada!' : 'Strategy Confirmed!'}
           </h1>
           <p className="text-muted-foreground mb-10 text-lg">
-            {locale === 'es' 
+            {isEs 
               ? 'Hemos enviado un recibo detallado a tu correo electrónico con los siguientes pasos.' 
               : 'We have sent a detailed receipt to your email with the next steps.'}
           </p>
           <Button asChild className="w-full bg-primary hover:opacity-90 text-primary-foreground font-bold h-14 rounded-xl transition-all shadow-lg shadow-primary/20">
-            <Link href={`/${locale}/`}>{locale === 'es' ? 'Volver al Inicio' : 'Back to Home'}</Link>
+            <Link href={`/${locale}/`}>{isEs ? 'Volver al Inicio' : 'Back to Home'}</Link>
           </Button>
         </div>
       </main>
     );
   }
 
-  // RENDER DEL FORMULARIO (Si no hay éxito)
   return (
     <main className="min-h-screen bg-background bg-grain pt-32 pb-24 text-foreground relative">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <h1 className="text-4xl md:text-5xl font-bold mb-12 text-gradient">Finalizar compra</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-12 text-gradient">
+          {isEs ? 'Finalizar compra' : 'Complete Purchase'}
+        </h1>
         {errorMsg && <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-lg mb-8">{errorMsg}</div>}
 
         <form onSubmit={handleSubmit} className="grid lg:grid-cols-12 gap-10 items-start">
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-card p-8 border border-border rounded-2xl shadow-lg">
-              <h2 className="text-xl font-bold mb-6 text-foreground">Detalles de facturación</h2>
+              <h2 className="text-xl font-bold mb-6 text-foreground">
+                {isEs ? 'Detalles de facturación' : 'Billing Details'}
+              </h2>
               <div className="grid sm:grid-cols-2 gap-5 mb-6">
-                <Input placeholder="Nombre *" required value={contactInfo.firstName} onChange={(e)=>setContactInfo({...contactInfo, firstName:e.target.value})} className={inputClass} />
-                <Input placeholder="Apellidos *" required value={contactInfo.lastName} onChange={(e)=>setContactInfo({...contactInfo, lastName:e.target.value})} className={inputClass} />
-                <Input placeholder="Correo electrónico *" type="email" required value={contactInfo.email} onChange={(e)=>setContactInfo({...contactInfo, email:e.target.value})} className={inputClass} />
-                <Input placeholder="Teléfono *" type="tel" required value={contactInfo.phone} onChange={(e)=>setContactInfo({...contactInfo, phone:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Nombre *" : "First Name *"} required value={contactInfo.firstName} onChange={(e)=>setContactInfo({...contactInfo, firstName:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Apellidos *" : "Last Name *"} required value={contactInfo.lastName} onChange={(e)=>setContactInfo({...contactInfo, lastName:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Correo electrónico *" : "Email address *"} type="email" required value={contactInfo.email} onChange={(e)=>setContactInfo({...contactInfo, email:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Teléfono *" : "Phone number *"} type="tel" required value={contactInfo.phone} onChange={(e)=>setContactInfo({...contactInfo, phone:e.target.value})} className={inputClass} />
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
-                <Input placeholder="País / Región *" required value={billingInfo.pais} disabled className={inputClass} />
-                <Input placeholder="Dirección de la calle *" required value={billingInfo.direccion} onChange={(e)=>setBillingInfo({...billingInfo, direccion:e.target.value})} className={inputClass} />
-                <Input placeholder="Localidad / Ciudad *" required value={billingInfo.localidad} onChange={(e)=>setBillingInfo({...billingInfo, localidad:e.target.value})} className={inputClass} />
-                <Input placeholder="Región / Estado *" required value={billingInfo.estado} onChange={(e)=>setBillingInfo({...billingInfo, estado:e.target.value})} className={inputClass} />
-                <Input placeholder="Código postal *" required value={billingInfo.codigo_postal} onChange={(e)=>setBillingInfo({...billingInfo, codigo_postal:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "País / Región *" : "Country / Region *"} required value={billingInfo.pais} disabled className={inputClass} />
+                <Input placeholder={isEs ? "Dirección de la calle *" : "Street address *"} required value={billingInfo.direccion} onChange={(e)=>setBillingInfo({...billingInfo, direccion:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Localidad / Ciudad *" : "City / Locality *"} required value={billingInfo.localidad} onChange={(e)=>setBillingInfo({...billingInfo, localidad:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Región / Estado *" : "State / Province *"} required value={billingInfo.estado} onChange={(e)=>setBillingInfo({...billingInfo, estado:e.target.value})} className={inputClass} />
+                <Input placeholder={isEs ? "Código postal *" : "Postal / Zip code *"} required value={billingInfo.codigo_postal} onChange={(e)=>setBillingInfo({...billingInfo, codigo_postal:e.target.value})} className={inputClass} />
               </div>
             </div>
 
@@ -122,19 +124,19 @@ export default function CheckoutContent() {
               <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none"><CreditCard className="w-40 h-40" /></div>
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-xl font-bold flex items-center gap-3"><CreditCard className="text-primary w-5 h-5" /> Tarjeta de Crédito/Débito</h2>
+                  <h2 className="text-xl font-bold flex items-center gap-3"><CreditCard className="text-primary w-5 h-5" /> {isEs ? 'Tarjeta de Crédito/Débito' : 'Credit/Debit Card'}</h2>
                   <img src="/etomin_logo.svg" alt="Etomin" className="h-6 brightness-0 invert opacity-80" />
                 </div>
                 <div className="grid gap-5 max-w-md">
-                  <Input placeholder="Número de tarjeta *" required maxLength={19} value={cardInfo.number} onChange={(e)=>setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '')})} className={inputClass + " font-mono tracking-widest"} />
-                  <Input placeholder="Nombre en la tarjeta *" required value={cardInfo.name} onChange={(e)=>setCardInfo({...cardInfo, name: e.target.value.toUpperCase()})} className={inputClass} />
+                  <Input placeholder={isEs ? "Número de tarjeta *" : "Card number *"} required maxLength={19} value={cardInfo.number} onChange={(e)=>setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '')})} className={inputClass + " font-mono tracking-widest"} />
+                  <Input placeholder={isEs ? "Nombre en la tarjeta *" : "Name on card *"} required value={cardInfo.name} onChange={(e)=>setCardInfo({...cardInfo, name: e.target.value.toUpperCase()})} className={inputClass} />
                   <div className="grid grid-cols-2 gap-5">
                     <Input placeholder="MM/AA *" required maxLength={5} value={cardInfo.expiry} onChange={handleExpiryChange} className={inputClass + " text-center"} />
                     <Input placeholder="CVV *" type="password" required maxLength={4} value={cardInfo.cvv} onChange={(e)=>setCardInfo({...cardInfo, cvv: e.target.value.replace(/\D/g, '')})} className={inputClass + " text-center tracking-widest"} />
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50">
                     <img src="/etomin_secbadge.svg" alt="Seguridad" className="h-10 opacity-90 grayscale hover:grayscale-0 transition-all" />
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter mt-3 flex items-center gap-2"><ShieldCheck className="w-3 h-3 text-secondary" /> Datos protegidos y encriptados.</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter mt-3 flex items-center gap-2"><ShieldCheck className="w-3 h-3 text-secondary" /> {isEs ? 'Datos protegidos y encriptados.' : 'Protected and encrypted data.'}</p>
                   </div>
                 </div>
               </div>
@@ -142,22 +144,24 @@ export default function CheckoutContent() {
           </div>
             
           <div className="lg:col-span-4 bg-card p-8 border border-border rounded-2xl shadow-lg sticky top-32">
-            <h2 className="text-xl font-bold mb-6 border-b border-border pb-4">Tu pedido</h2>
+            <h2 className="text-xl font-bold mb-6 border-b border-border pb-4">
+              {isEs ? 'Tu pedido' : 'Your order'}
+            </h2>
             <div className="space-y-4 mb-6">
               {items.map((item: CartItem, idx: number) => (
                 <div key={idx} className="flex justify-between text-sm items-center">
-                  <span className="text-muted-foreground">{item.plans_nc?.title || 'Personalizado'} <span className="text-foreground font-medium">x{item.quantity}</span></span>
+                  <span className="text-muted-foreground">{item.plans_nc?.title || (isEs ? 'Personalizado' : 'Custom')} <span className="text-foreground font-medium">x{item.quantity}</span></span>
                   <span className="font-bold">{formatPrice((item.custom_price || item.plans_nc?.price || 0) * item.quantity)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-border pt-6 mb-8 font-sans">
               <div className="flex justify-between items-center mb-2"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(total / 1.16)}</span></div>
-              <div className="flex justify-between items-center mb-4"><span className="text-muted-foreground">Impuesto (16%)</span><span>{formatPrice(total - (total / 1.16))}</span></div>
-              <div className="flex justify-between items-center text-xl font-bold text-gradient mt-6"><span>Total estimado</span><span>{formatPrice(total)}</span></div>
+              <div className="flex justify-between items-center mb-4"><span className="text-muted-foreground">{isEs ? 'Impuesto (16%)' : 'Tax (16%)'}</span><span>{formatPrice(total - (total / 1.16))}</span></div>
+              <div className="flex justify-between items-center text-xl font-bold text-gradient mt-6"><span>{isEs ? 'Total estimado' : 'Estimated Total'}</span><span>{formatPrice(total)}</span></div>
             </div>
             <Button type="submit" disabled={isProcessing} className="w-full bg-primary hover:opacity-90 text-primary-foreground font-bold h-14 rounded-lg text-lg">
-              {isProcessing ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : `REALIZAR EL PAGO`}
+              {isProcessing ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : (isEs ? 'REALIZAR EL PAGO' : 'PROCESS PAYMENT')}
             </Button>
           </div>
         </form>

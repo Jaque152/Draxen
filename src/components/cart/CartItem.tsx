@@ -6,7 +6,6 @@ import { updateQuantity, removeFromCart } from '@/actions/cart';
 import { useCart } from '@/hooks/use-cart';
 import { Minus, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useLocale } from 'next-intl';
-import { ClientT } from '@/components/shared/ClientT'; // Importamos el traductor de cliente
 
 export function CartItemComponent({ item }: { item: CartItem }) {
   const { refreshCart } = useCart();
@@ -44,12 +43,8 @@ export function CartItemComponent({ item }: { item: CartItem }) {
       <div className="flex-1 flex flex-col justify-between">
         <div className="pr-6">
           <h4 className="font-serif text-lg font-bold text-foreground leading-tight">
-            {/* Traducimos el título dinámico usando ClientT */}
-            {item.plans_nc?.title ? (
-              <ClientT>{item.plans_nc.title}</ClientT>
-            ) : (
-              isEs ? 'Estrategia Personalizada' : 'Custom Strategy'
-            )}
+            {/* VUELVE A LA NORMALIDAD: Muestra el título real o el fallback */}
+            {item.plans_nc?.title || (isEs ? 'Estrategia Personalizada' : 'Custom Strategy')}
           </h4>
           
           {item.quote_id && (

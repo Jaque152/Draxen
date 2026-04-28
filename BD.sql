@@ -173,3 +173,12 @@ BEGIN
   PERFORM set_config('app.current_session_id', s_id, false);
 END;
 $$ LANGUAGE plpgsql;
+---==================================================
+DROP POLICY IF EXISTS "Sesión privada carrito" ON public.cart_items_nc;
+
+CREATE POLICY "Permitir insertar carrito" ON public.cart_items_nc FOR INSERT WITH CHECK (true);
+
+
+CREATE POLICY "Permitir leer carrito" ON public.cart_items_nc FOR SELECT USING (true);
+CREATE POLICY "Permitir borrar carrito" ON public.cart_items_nc FOR DELETE USING (true);
+CREATE POLICY "Permitir actualizar carrito" ON public.cart_items_nc FOR UPDATE USING (true);
