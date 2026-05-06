@@ -109,3 +109,23 @@ CREATE POLICY "Acceso publico carrito"
 ON cb_cart_items FOR ALL 
 USING (true) 
 WITH CHECK (true);
+
+-- 1. Crear la tabla para almacenar las cotizaciones a medida (Leads)
+CREATE TABLE IF NOT EXISTS cb_custom_quotes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nombre TEXT NOT NULL,
+    apellidos TEXT NOT NULL,
+    correo_electronico TEXT NOT NULL,
+    id_cotizacion TEXT NOT NULL,
+    monto_a_pagar NUMERIC(10, 2) NOT NULL,
+    payment_status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 2. Habilitar la seguridad de nivel de fila (RLS)
+ALTER TABLE cb_custom_quotes ENABLE ROW LEVEL SECURITY;
+
+-- 3. Crear política: Permitir que el formulario web (público) inserte cotizaciones
+CREATE POLICY "Permitir insercion de cotizaciones web" 
+ON cb_custom_quotes FOR INSERT 
+WITH CHECK (true);
