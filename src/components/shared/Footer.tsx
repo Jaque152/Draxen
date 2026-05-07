@@ -31,9 +31,9 @@ export function Footer() {
       { name: isEs ? "Cotizador" : "Pricing", href: `/${locale}/pricing` },
     ],
     legal: [
-      { name: isEs ? "Aviso de Privacidad" : "Privacy Policy", href: `/${locale}/legal/privacy` },
-      { name: isEs ? "Términos de Servicio" : "Terms of Service", href: `/${locale}/legal/terms-conditions` },
-      { name: isEs ? "Política de Cancelación" : "Cancellation Policy", href: `/${locale}/legal/cancellation` },
+      { name: isEs ? "Política de Privacidad" : "Privacy Policy", href: `/${locale}/legal/privacy` },
+      { name: isEs ? "Términos y condiciones" : "Terms of Service", href: `/${locale}/legal/terms-conditions` },
+      { name: isEs ? "Política de reembolsos y cancelaciones" : "Cancellation Policy", href: `/${locale}/legal/cancellation` },
     ],
   };
 
