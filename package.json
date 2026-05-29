@@ -10,6 +10,7 @@
     "format": "bunx biome format --write"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.6",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
     "class-variance-authority": "^0.7.1",
