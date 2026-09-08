@@ -68,7 +68,7 @@ export default function ContactPage() {
               : 'We received your information successfully. Our team will contact you soon.'}
           </p>
           <Button asChild className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white font-bold h-14 rounded-xl transition-all shadow-xl">
-            <Link href={`/${locale}/`}>{isEs ? 'Volver al Inicio' : 'Back to Home'}</Link>
+            <Link href={`/${locale}/`}>{isEs ? 'Inicio' : 'Home'}</Link>
           </Button>
         </div>
       </main>

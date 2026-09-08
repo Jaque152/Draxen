@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { AddToCartButton } from './AddToCartButton';
 import { ArrowRight } from 'lucide-react';
+import { ClientPrice } from '@/components/shared/ClientPrice';
 
 export default async function ServicesCatalogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -25,8 +26,6 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
     plan.title.toLowerCase().includes('personalizado') || 
     plan.title.toLowerCase().includes('custom')
   );
-
-  const formatPrice = (p: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p);
 
   return (
     <main className="min-h-screen bg-mesh pt-32 pb-24 text-[var(--text-main)] relative">
@@ -69,10 +68,10 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
               <div className="mt-auto pt-6 border-t border-[var(--text-main)]/10 flex items-end justify-between relative z-10">
                 <div>
                   <span className="text-2xl font-bold text-[var(--text-main)] block mb-1 tracking-tight">
-                    {formatPrice(plan.price)}
+                    <ClientPrice amount={plan.price} />
                   </span>
                   <span className="text-[10px] text-[var(--text-main)]/50 font-bold uppercase tracking-widest">
-                    MXN + IVA
+                    + IVA
                   </span>
                 </div>
                 

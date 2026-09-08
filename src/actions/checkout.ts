@@ -39,7 +39,8 @@ async function safeEtominFetch(url: string, options: RequestInit, stepName: stri
 
 export async function processCheckout(formData: CheckoutPayload) {
   try {
-    const { locale, contactInfo, billingInfo, cardInfo, items, total } = formData;
+    // 1. Extraemos currency y exchangeRate 
+    const { locale, contactInfo, billingInfo, cardInfo, items, total, currency = 'MXN', exchangeRate = 1 } = formData;
     
     const supabaseAdmin = createClient(
       requireEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
@@ -75,13 +76,22 @@ export async function processCheckout(formData: CheckoutPayload) {
 
     if (!tokenData.cardNumberToken) throw new Error("Tarjeta declinada o inválida.");
 
-    // 3. VENTA (RETORNAMOS A LOS VALORES ORIGINALES QUE TE FUNCIONABAN)
-    const subtotalCalc = total; 
+    // 3. VENTA Y CONVERSIÓN DE DIVISAS
+    const subtotalCalc = total; // Valor base en MXN
     const impuestoCalc = subtotalCalc * 0.16;
-    const totalFinal = subtotalCalc + impuestoCalc;
+    const totalFinalMXN = subtotalCalc + impuestoCalc;
+    
+    const isUsd = currency === 'USD';
+    const etominCurrencyCode = isUsd ? 840 : 484;
+
+    // Calculamos el monto a cobrar en la pasarela en la moneda exacta
+    const amountToCharge = isUsd && exchangeRate > 1 
+      ? Number((totalFinalMXN / exchangeRate).toFixed(2)) 
+      : Number(totalFinalMXN.toFixed(2));
+
     const salePayload = {
-      amount: Number(totalFinal.toFixed(2)),
-      currency: 484, // RESTAURADO: Etomin usa estrictamente el 484 para MXN
+      amount: amountToCharge,
+      currency: etominCurrencyCode, // Código de moneda dinámico
       reference: `DX-${Date.now()}`, 
       customerInformation: {
         firstName: contactInfo.firstName,
@@ -98,12 +108,18 @@ export async function processCheckout(formData: CheckoutPayload) {
         cardNumberToken: tokenData.cardNumberToken,
         cvv: cardInfo.cvv
       },
-      items: items.map((i: CartItem) => ({
-        title: i.cb_plans?.title || 'Estrategia Personalizada',
-        amount: Number((i.custom_price !== null ? i.custom_price : (i.cb_plans?.price || 0)).toFixed(2)),
-        quantity: i.quantity,
-        id: i.plan_id.toString() // RESTAURADO: Mandamos el UUID completo sin recortar
-      }))
+      items: items.map((i: CartItem) => {
+        // También convertimos el precio individual para que el desglose de Etomin cuadre
+        const basePrice = i.custom_price !== null ? i.custom_price : (i.cb_plans?.price || 0);
+        const itemPrice = isUsd && exchangeRate > 1 ? basePrice / exchangeRate : basePrice;
+        
+        return {
+          title: i.cb_plans?.title || 'Estrategia Personalizada',
+          amount: Number(itemPrice.toFixed(2)),
+          quantity: i.quantity,
+          id: i.plan_id.toString() 
+        };
+      })
     };
 
     const saleData = await safeEtominFetch(`${ETOMIN_BASE_URL}/sale`, {
@@ -112,15 +128,13 @@ export async function processCheckout(formData: CheckoutPayload) {
       body: JSON.stringify(salePayload)
     }, 'Procesar Venta');
 
-    // DEBUG: Ver qué dice Etomin si falla
     if (saleData.status !== 'APPROVED') {
       console.error("\n❌ [ERROR DE ETOMIN DETALLADO]:", JSON.stringify(saleData, null, 2), "\n");
-      // Extraemos el mensaje real del banco si existe (ej. "Fondos insuficientes", "CVV erróneo")
       const reason = saleData.message || saleData.responseCode || "Transacción declinada.";
       throw new Error(`El banco rechazó el pago: ${reason}`);
     }
 
-    // 4. GUARDAR EN BD
+    // 4. GUARDAR EN BD (Guardamos en MXN como divisa base contable)
     const { data: checkoutRecord, error: dbError } = await supabaseAdmin
       .from('cb_orders')
       .insert({
@@ -135,7 +149,7 @@ export async function processCheckout(formData: CheckoutPayload) {
         correo_electronico: contactInfo.email,
         subtotal: subtotalCalc,
         impuesto: impuestoCalc,
-        total_estimado: totalFinal,
+        total_estimado: totalFinalMXN,
         status: 'paid'
       })
       .select()
@@ -158,8 +172,8 @@ export async function processCheckout(formData: CheckoutPayload) {
     const { error: itemsError } = await supabaseAdmin.from('cb_order_items').insert(checkoutItems);
     if (itemsError) console.error("[CRÍTICO] Detalle del error en Items:", itemsError);
 
-    // 6. ENVIAR CORREO
-    await sendReceiptEmail(checkoutRecord as Checkout, items, locale === 'en');
+    // 6. ENVIAR CORREO (Pasamos los datos de la divisa para que el correo se envíe visualmente en USD/MXN)
+    await sendReceiptEmail(checkoutRecord as Checkout, items, locale === 'en', currency, exchangeRate);
 
     return { success: true };
   } catch (error: unknown) {

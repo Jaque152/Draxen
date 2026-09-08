@@ -9,7 +9,7 @@ import { processCheckout } from "@/actions/checkout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartItem, CheckoutPayload } from "@/types";
-
+import { useCurrency } from '@/hooks/use-currency';
 export default function CheckoutContent() {
   const { items, total, clearCart } = useCart();
   const locale = useLocale();
@@ -20,7 +20,7 @@ export default function CheckoutContent() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [contactInfo, setContactInfo] = useState({ firstName: "", lastName: "", email: "", phone: "" });
-  const [billingInfo, setBillingInfo] = useState({ pais: "México", direccion: "", localidad: "", estado: "", codigo_postal: "" });
+  const [billingInfo, setBillingInfo] = useState({ pais: "", direccion: "", localidad: "", estado: "", codigo_postal: "" });
   const [cardInfo, setCardInfo] = useState({ number: "", name: "", expiry: "", cvv: "" });
 
   useEffect(() => {
@@ -32,15 +32,14 @@ export default function CheckoutContent() {
     }
   }, []);
 
-  const formatPrice = (price: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(price);
-
+  const { currency, exchangeRate, formatPrice, isLoading } = useCurrency();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     setErrorMsg("");
     
     const payload: CheckoutPayload = {
-      locale, contactInfo, billingInfo, cardInfo, items, total  
+      locale, contactInfo, billingInfo, cardInfo, items, total, currency, exchangeRate
     };
     
     const res = await processCheckout(payload);
@@ -48,7 +47,7 @@ export default function CheckoutContent() {
     if (res.success) {
       clearCart();
       setContactInfo({ firstName: "", lastName: "", email: "", phone: "" });
-      setBillingInfo({ pais: "México", direccion: "", localidad: "", estado: "", codigo_postal: "" });
+      setBillingInfo({ pais: "", direccion: "", localidad: "", estado: "", codigo_postal: "" });
       setCardInfo({ number: "", name: "", expiry: "", cvv: "" });
       setShowSuccess(true);
       window.scrollTo(0, 0);
@@ -83,7 +82,7 @@ export default function CheckoutContent() {
               : 'We have sent a detailed receipt to your email with the next steps.'}
           </p>
           <Button asChild className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white font-bold h-14 rounded-xl transition-all shadow-xl">
-            <Link href={`/${locale}/`}>{isEs ? 'Volver al Inicio' : 'Back to Home'}</Link>
+            <Link href={`/${locale}/`}>{isEs ? 'Inicio' : 'Home'}</Link>
           </Button>
         </div>
       </main>
@@ -111,7 +110,7 @@ export default function CheckoutContent() {
                 <Input placeholder={isEs ? "Teléfono *" : "Phone number *"} type="tel" required value={contactInfo.phone} onChange={(e)=>setContactInfo({...contactInfo, phone:e.target.value})} className={inputClass} />
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
-                <Input placeholder={isEs ? "País / Región *" : "Country / Region *"} required value={billingInfo.pais} disabled className={inputClass + " opacity-70"} />
+                <Input placeholder={isEs ? "País / Región *" : "Country / Region *"} required value={billingInfo.pais} onChange={(e)=> setBillingInfo({...billingInfo, pais:e.target.value})} className={inputClass} />
                 <Input placeholder={isEs ? "Dirección de la calle *" : "Street address *"} required value={billingInfo.direccion} onChange={(e)=>setBillingInfo({...billingInfo, direccion:e.target.value})} className={inputClass} />
                 <Input placeholder={isEs ? "Localidad / Ciudad *" : "City / Locality *"} required value={billingInfo.localidad} onChange={(e)=>setBillingInfo({...billingInfo, localidad:e.target.value})} className={inputClass} />
                 <Input placeholder={isEs ? "Región / Estado *" : "State / Province *"} required value={billingInfo.estado} onChange={(e)=>setBillingInfo({...billingInfo, estado:e.target.value})} className={inputClass} />
@@ -134,7 +133,17 @@ export default function CheckoutContent() {
                   <img src="/etomin_logo.svg" alt="Etomin" className="h-6 opacity-60 mix-blend-multiply" />
                 </div>
                 <div className="grid gap-5 max-w-md">
-                  <Input placeholder={isEs ? "Número de tarjeta *" : "Card number *"} required maxLength={19} value={cardInfo.number} onChange={(e)=>setCardInfo({...cardInfo, number: e.target.value.replace(/\D/g, '')})} className={inputClass + " font-mono tracking-widest text-lg"} />
+                  <Input 
+                    placeholder={isEs ? "Número de tarjeta *" : "Card number *"} 
+                    required 
+                    maxLength={19} 
+                    value={cardInfo.number} 
+                    onChange={(e)=>{
+                      const raw = e.target.value.replace(/\D/g, '');
+                      const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 '); // Formato 1234 5678 9012 3456
+                      setCardInfo({...cardInfo, number: formatted});
+                    }} 
+                    className={inputClass + " font-mono tracking-widest text-lg"} />
                   <Input placeholder={isEs ? "Nombre en la tarjeta *" : "Name on card *"} required value={cardInfo.name} onChange={(e)=>setCardInfo({...cardInfo, name: e.target.value.toUpperCase()})} className={inputClass} />
                   <div className="grid grid-cols-2 gap-5">
                     <Input placeholder="MM/AA *" required maxLength={5} value={cardInfo.expiry} onChange={handleExpiryChange} className={inputClass + " text-center"} />
@@ -164,15 +173,15 @@ export default function CheckoutContent() {
                     <span className="text-[var(--accent-purple)] font-bold ml-2">x{item.quantity}</span>
                   </span>
                   <span className="font-bold text-[var(--text-main)]">
-                    {formatPrice((item.custom_price || item.cb_plans?.price || 0) * item.quantity)}
+                    {isLoading ? '...' : formatPrice((item.custom_price || item.cb_plans?.price || 0) * item.quantity)}
                   </span>
                 </div>
               ))}
             </div>
             <div className="border-t border-[var(--text-main)]/10 pt-6 mb-8 font-sans">
-              <div className="flex justify-between items-center mb-2 font-medium"><span className="text-[var(--text-main)]/60">Subtotal</span><span className="text-[var(--text-main)]">{formatPrice(total / 1.16)}</span></div>
-              <div className="flex justify-between items-center mb-4 font-medium"><span className="text-[var(--text-main)]/60">{isEs ? 'Impuesto (16%)' : 'Tax (16%)'}</span><span className="text-[var(--text-main)]">{formatPrice(total - (total / 1.16))}</span></div>
-              <div className="flex justify-between items-center text-xl font-bold text-gradient-pop mt-6"><span>{isEs ? 'Total estimado' : 'Estimated Total'}</span><span>{formatPrice(total)}</span></div>
+              <div className="flex justify-between items-center mb-2 font-medium"><span className="text-[var(--text-main)]/60">Subtotal</span><span className="text-[var(--text-main)]">{isLoading ? '...' : formatPrice(total / 1.16)}</span></div>
+              <div className="flex justify-between items-center mb-4 font-medium"><span className="text-[var(--text-main)]/60">{isEs ? 'Impuesto (16%)' : 'Tax (16%)'}</span><span className="text-[var(--text-main)]">{isLoading ? '...' : formatPrice(total - (total / 1.16))}</span></div>
+              <div className="flex justify-between items-center text-xl font-bold text-gradient-pop mt-6"><span>{isEs ? 'Total estimado' : 'Estimated Total'}</span><span>{isLoading ? '...' : formatPrice(total)}</span></div>
             </div>
             <Button type="submit" disabled={isProcessing} className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white font-bold h-14 rounded-xl text-lg shadow-xl shadow-[var(--accent-dark)]/20 transition-all">
               {isProcessing ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : (isEs ? 'PROCESAR PAGO' : 'PROCESS PAYMENT')}

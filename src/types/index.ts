@@ -105,4 +105,6 @@ export interface CheckoutPayload {
   cardInfo: CardInfo;
   items: CartItem[]; 
   total: number;
+  currency?: string;      
+  exchangeRate?: number;
 }

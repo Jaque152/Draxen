@@ -6,16 +6,17 @@ import { updateQuantity } from '@/actions/cart'; // Importación correcta del Se
 import { useCart } from '@/hooks/use-cart';
 import { Minus, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useLocale } from 'next-intl';
+import { useCurrency } from '@/hooks/use-currency';
 
 export function CartItemComponent({ item }: { item: CartItem }) {
   const { refreshCart, removeFromCart } = useCart();
   const [isPending, startTransition] = useTransition();
   const locale = useLocale();
+  const { formatPrice, isLoading } = useCurrency();
   const isEs = locale === 'es';
 
   // Usamos cb_plans en lugar de plans_nc
   const price = item.custom_price !== null ? item.custom_price : (item.cb_plans?.price || 0);  
-  const formatPrice = (p: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p);
 
   const handleUpdateQty = (newQty: number) => {
     if (newQty < 1) return;
@@ -78,7 +79,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
 
           <div className="text-right">
             <div className="text-lg font-bold text-[var(--text-main)]">
-              {formatPrice(price * item.quantity)}
+              {isLoading ? '...' : formatPrice(price * item.quantity)}
             </div>
           </div>
         </div>

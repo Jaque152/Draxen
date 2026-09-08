@@ -27,7 +27,7 @@ export async function addToCart(planId: string, customPrice?: number, quoteId?: 
       .eq('id', existingItem.id);
   } else {
     // Si es nuevo o es un plan personalizado, creamos registro nuevo
-    await supabase.from('cb_cart_items').insert({ // ACTUALIZADO
+    await supabase.from('cb_cart_items').insert({ 
       plan_id: planId,
       session_id: sessionId,
       quantity: 1,
@@ -42,7 +42,7 @@ export async function addToCart(planId: string, customPrice?: number, quoteId?: 
 
 export async function removeFromCart(itemId: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from('cb_cart_items').delete().eq('id', itemId); // ACTUALIZADO
+  const { error } = await supabase.from('cb_cart_items').delete().eq('id', itemId); 
   
   revalidatePath('/', 'layout');
   return { success: !error };
@@ -52,7 +52,7 @@ export async function updateQuantity(itemId: string, quantity: number) {
   if (quantity < 1) return removeFromCart(itemId);
   
   const supabase = await createClient();
-  await supabase.from('cb_cart_items').update({ quantity }).eq('id', itemId); // ACTUALIZADO
+  await supabase.from('cb_cart_items').update({ quantity }).eq('id', itemId); 
   
   revalidatePath('/', 'layout');
 }

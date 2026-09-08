@@ -5,8 +5,6 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = 'ventas@draxendigital.com'; 
 const INTERNAL_EMAIL = 'info@draxendigital.com';
 
-const formatPrice = (price: number) => 
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(price);
 
 // Paleta Ciber-Audaz adaptada para clientes de correo
 const emailTheme = {
@@ -25,8 +23,20 @@ const emailTheme = {
 export async function sendReceiptEmail(
   checkout: Checkout, 
   items: CartItem[], 
-  isEnglish: boolean = false
+  isEnglish: boolean = false,
+  currency: string = 'MXN',
+  exchangeRate: number = 1
 ) {
+  // Función formateadora dinámica local
+  const formatCurrency = (amount: number) => {
+    const isUsd = currency === 'USD';
+    const finalAmount = isUsd && exchangeRate > 1 ? amount / exchangeRate : amount;
+    return new Intl.NumberFormat(isUsd ? 'en-US' : 'es-MX', {
+      style: 'currency',
+      currency: isUsd ? 'USD' : 'MXN',
+      minimumFractionDigits: 2,
+    }).format(finalAmount) + ` ${currency}`;
+  };
   // --- A. PLANTILLA DISRUPTIVA PARA EL CLIENTE ---
   const subjectClient = isEnglish 
     ? `System Activated - Welcome to Draxen Digital` 
@@ -65,7 +75,7 @@ export async function sendReceiptEmail(
                   ${item.cb_plans?.title || 'Custom Plan'}
                   ${item.quote_id ? `<br><span style="font-size:12px; color:${emailTheme.accentCyan}; font-family: monospace;">Ref: ${item.quote_id}</span>` : ''}
                 </td>
-                <td style="padding: 15px 0; text-align: right; color: ${emailTheme.textLight}; font-size: 14px; font-weight: bold;">${formatPrice(item.custom_price || item.cb_plans?.price || 0)}</td>
+                <td style="padding: 15px 0; text-align: right; color: ${emailTheme.textLight}; font-size: 14px; font-weight: bold;">${formatCurrency(item.custom_price || item.cb_plans?.price || 0)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -73,7 +83,7 @@ export async function sendReceiptEmail(
 
         <div style="background-color: ${emailTheme.cardDark}; border-radius: 12px; padding: 25px; text-align: right; border-left: 4px solid ${emailTheme.accentCyan};">
           <span style="font-size: 11px; color: ${emailTheme.textMuted}; text-transform: uppercase; letter-spacing: 1px;">Total (IVA Incluido)</span>
-          <span style="font-size: 28px; font-weight: 800; color: ${emailTheme.accentMagenta}; display: block; margin-top: 5px;">${formatPrice(checkout.total_estimado)}</span>
+          <span style="font-size: 28px; font-weight: 800; color: ${emailTheme.accentMagenta}; display: block; margin-top: 5px;">${formatCurrency(checkout.total_estimado)}</span>
         </div>
       </div>
     </div>
@@ -97,15 +107,15 @@ export async function sendReceiptEmail(
         ${items.map(item => `
           <li style="margin-bottom: 8px;">
             ${item.quantity}x <strong>${item.cb_plans?.title || 'Custom Plan'}</strong> 
-            - ${formatPrice(item.custom_price || item.cb_plans?.price || 0)}
+            - ${formatCurrency(item.custom_price || item.cb_plans?.price || 0)}
           </li>
         `).join('')}
       </ul>
       
       <div style="margin-top: 20px; padding: 15px; background: #0f172a; color: white; border-radius: 6px; text-align: right;">
-        <p style="margin: 5px 0; color: #94a3b8;">Subtotal: ${formatPrice(checkout.subtotal)}</p>
-        <p style="margin: 5px 0; color: #94a3b8;">Impuestos: ${formatPrice(checkout.impuesto)}</p>
-        <p style="margin: 10px 0 0 0; font-size: 18px; color: #d946ef;"><strong>TOTAL COBRADO: ${formatPrice(checkout.total_estimado)}</strong></p>
+        <p style="margin: 5px 0; color: #94a3b8;">Subtotal: ${formatCurrency(checkout.subtotal)}</p>
+        <p style="margin: 5px 0; color: #94a3b8;">Impuestos: ${formatCurrency(checkout.impuesto)}</p>
+        <p style="margin: 10px 0 0 0; font-size: 18px; color: #d946ef;"><strong>TOTAL COBRADO: ${formatCurrency(checkout.total_estimado)}</strong></p>
       </div>
     </div>
   `;
@@ -120,7 +130,7 @@ export async function sendReceiptEmail(
     resend.emails.send({
       from: `Sales Bot <${FROM_EMAIL}>`,
       to: [INTERNAL_EMAIL],
-      subject: `[VENTA] ${checkout.nombre} ${checkout.apellidos} - ${formatPrice(checkout.total_estimado)}`,
+      subject: `[VENTA] ${checkout.nombre} ${checkout.apellidos} - ${formatCurrency(checkout.total_estimado)}`,
       html: htmlInternal,
     })
   ]);

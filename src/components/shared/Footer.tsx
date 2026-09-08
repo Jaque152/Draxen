@@ -121,7 +121,7 @@ export function Footer() {
           
           <div className="flex flex-col sm:flex-row items-center gap-6 order-1 md:order-2">
             
-            {/* SELECTOR DE IDIOMA (AHORA CIBER-AUDAZ) */}
+            {/* SELECTOR DE IDIOMA*/}
             <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
               <Globe className="w-5 h-5 text-white/50 ml-2" />
               <button

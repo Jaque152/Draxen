@@ -6,15 +6,15 @@ import { Button } from '@/components/ui/button';
 import { CartItemComponent } from './CartItem';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
+import { useCurrency } from '@/hooks/use-currency';
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, total } = useCart();
   const locale = useLocale();
   const isEs = locale === 'es';
+  const { formatPrice, isLoading, currency, toggleCurrency } = useCurrency();
 
   if (!isOpen) return null;
-
-  const formatPrice = (p: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(p);
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
@@ -55,41 +55,68 @@ export function CartDrawer() {
             items.map((item) => <CartItemComponent key={item.id} item={item} />)
           )}
         </div>
-
         {/* Footer del Drawer */}
         {items.length > 0 && (
-          <div className="p-8 border-t border-[var(--text-main)]/10 bg-white/50 backdrop-blur-md">
-            <div className="flex justify-between items-end mb-8 font-sans">
-              <span className="text-[var(--text-main)]/60 text-sm font-bold uppercase tracking-widest">
-                {isEs ? 'Total de Inversión' : 'Total Investment'}
-              </span>
+          <div className="p-6 sm:p-8 border-t border-[var(--text-main)]/10 bg-white/50 backdrop-blur-md">
+            
+            {/* NUEVO CONTENEDOR: Moneda y Total */}
+            <div className="flex flex-row justify-between items-end mb-8 font-sans">
+              
+              {/* Selector de Moneda (Segmented Control) */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[var(--text-main)]/50 text-[10px] font-bold uppercase tracking-widest">
+                  {isEs ? 'Moneda' : 'Currency'}
+                </span>
+                <div className="flex items-center bg-black/5 p-1 rounded-xl border border-[var(--text-main)]/10">
+                  <button
+                    type="button"
+                    onClick={() => currency !== 'MXN' && toggleCurrency()}
+                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 ${
+                      currency === 'MXN' 
+                        ? 'bg-white text-[var(--accent-dark)] shadow-sm' 
+                        : 'text-[var(--text-main)]/40 hover:text-[var(--text-main)]/70'
+                    }`}
+                  >
+                    MXN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => currency !== 'USD' && toggleCurrency()}
+                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 ${
+                      currency === 'USD' 
+                        ? 'bg-white text-[var(--accent-dark)] shadow-sm' 
+                        : 'text-[var(--text-main)]/40 hover:text-[var(--text-main)]/70'
+                    }`}
+                  >
+                    USD
+                  </button>
+                </div>
+              </div>
+
+              {/* Total Final */}
               <div className="text-right">
-                  {/* Mostramos el total con IVA para que el cliente no se lleve sorpresas en el checkout */}
-                  <span className="text-3xl font-bold text-gradient-pop block">{formatPrice(total * 1.16)}</span>
-                  <span className="text-[10px] text-[var(--text-main)]/50 font-bold uppercase tracking-tighter">
+                  <span className="text-[var(--text-main)]/60 text-xs sm:text-sm font-bold uppercase tracking-widest block mb-1">
+                    {isEs ? 'Total de Inversión' : 'Total Investment'}
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-bold text-gradient-pop block">
+                    {isLoading ? '...' : formatPrice(total * 1.16)}
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-[var(--text-main)]/50 font-bold uppercase tracking-tighter">
                     {isEs ? 'Subtotal + 16% de IVA' : 'Subtotal + 16% VAT'}
                   </span>
               </div>
             </div>
-            <div className="flex flex-col gap-3 mt-6">
-              {/* BOTÓN VER CARRITO (Secundario) */}
+
+            {/* Botones de Acción */}
+            <div className="flex flex-col gap-3">
               <Button asChild className="w-full h-14 rounded-xl font-bold border border-[var(--accent-purple)]/30 bg-white/50 text-[var(--accent-purple)] hover:bg-white transition-all p-0 shadow-sm">
-                <Link 
-                  href={`/${locale}/cart`} 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-full h-full"
-                >
+                <Link href={`/${locale}/cart`} onClick={() => setIsOpen(false)} className="flex items-center justify-center w-full h-full">
                   {isEs ? 'Ver carrito completo' : 'View full cart'}
                 </Link>
               </Button>
 
-              {/* BOTÓN CHECKOUT (Primario) */}
               <Button asChild className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white h-14 rounded-xl shadow-xl shadow-[var(--accent-dark)]/20 transition-all p-0 group">
-                <Link 
-                  href={`/${locale}/checkout`} 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-full h-full font-bold text-lg"
-                >
+                <Link href={`/${locale}/checkout`} onClick={() => setIsOpen(false)} className="flex items-center justify-center w-full h-full font-bold text-lg">
                   {isEs ? 'Continuar al Checkout' : 'Proceed to Checkout'} 
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>

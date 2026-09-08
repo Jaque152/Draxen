@@ -4,8 +4,10 @@ import { ClientBody } from "@/components/shared/ClientBody";
 import { Navigation } from "@/components/shared/Navigation";
 import { Footer } from "@/components/shared/Footer";
 import { NextIntlClientProvider } from 'next-intl';
-
+import { Providers } from "@/components/shared/Providers";
 import { Playfair_Display, DM_Sans } from "next/font/google";
+import { CartProvider } from "@/hooks/use-cart";
+import { CurrencyProvider } from "@/hooks/use-currency";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -33,19 +35,20 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-
   return (
-
     <html lang={locale} className={`${playfair.variable} ${dmSans.variable} scroll-smooth`}>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col font-sans">
         <NextIntlClientProvider locale={locale} messages={{}}>
-          <ClientBody>
-            <Navigation />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </ClientBody>
+          {/* 1. PROVIDERS AHORA ENVUELVE TODO, INCLUYENDO CLIENTBODY */}
+          <Providers>
+            <ClientBody>
+              <Navigation />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </ClientBody>
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>

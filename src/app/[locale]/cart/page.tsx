@@ -6,14 +6,13 @@ import { useCart } from '@/hooks/use-cart';
 import { Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/types';
+import { useCurrency } from '@/hooks/use-currency';
 
 export default function CartPage() {
   const { items, total, removeFromCart } = useCart();
   const locale = useLocale();
   const isEs = locale === 'es';
-
-  const formatPrice = (price: number) => 
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(price);
+  const { formatPrice, isLoading } = useCurrency();
 
   if (items.length === 0) {
     return (
@@ -82,7 +81,7 @@ export default function CartPage() {
 
                       <div className="col-span-1 md:col-span-3 md:text-right font-bold text-lg text-[var(--text-main)]">
                         <span className="md:hidden font-bold text-[var(--text-main)]/60 font-medium mr-2">{isEs ? 'Precio:' : 'Price:'}</span>
-                        {formatPrice(itemPrice * item.quantity)}
+                        {isLoading ? '...' : formatPrice(itemPrice * item.quantity)}
                       </div>
 
                       <div className="col-span-1 md:col-span-1 flex md:justify-end mt-4 md:mt-0">
@@ -109,15 +108,15 @@ export default function CartPage() {
             <div className="space-y-4 mb-6 font-medium">
               <div className="flex justify-between items-center text-[var(--text-main)]/60">
                 <span>Subtotal</span>
-                <span className="text-[var(--text-main)] font-bold">{formatPrice(total)}</span>
+                <span>{isLoading ? '...' : formatPrice(total)}</span>
               </div>
               <div className="flex justify-between items-center text-[var(--text-main)]/60">
                 <span>{isEs ? 'IVA (16%)' : 'Tax (16%)'}</span>
-                <span className="text-[var(--text-main)] font-bold">{formatPrice(total * 0.16)}</span>
+                <span>{isLoading ? '...' : formatPrice(total * 0.16)}</span>
               </div>
               <div className="border-t border-[var(--text-main)]/10 pt-4 mt-4 flex justify-between items-center text-xl font-bold text-gradient-pop">
                 <span>{isEs ? 'Total Final' : 'Final Total'}</span>
-                <span>{formatPrice(total * 1.16)}</span>
+                <span>{isLoading ? '...' : formatPrice(total * 1.16)}</span>
               </div>
             </div>
             
