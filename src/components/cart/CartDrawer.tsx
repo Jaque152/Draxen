@@ -3,10 +3,10 @@
 import { useCart } from '@/hooks/use-cart';
 import { X, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CartItemComponent } from './CartItem';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useCurrency } from '@/hooks/use-currency';
+import CartItemComponent from './CartItem';
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, total } = useCart();

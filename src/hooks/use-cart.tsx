@@ -1,108 +1,113 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { CartItem } from '@/types'; 
+import { plans } from '@/data/plans'; 
+
+export interface LocalCartItem {
+  id: string; 
+  plan_id: string; 
+  quantity: number;
+  custom_price: number | null;
+  quote_id: string | null;
+}
 
 interface CartContextType {
-  items: CartItem[];
+  items: LocalCartItem[];
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  refreshCart: () => Promise<void>;
   clearCart: () => void;
   total: number;
-  addToCart: (planId: string, quantity?: number, customPrice?: number | null, quoteId?: string | null) => Promise<boolean>;
-  removeFromCart: (cartItemId: string) => Promise<void>;
+  addToCart: (planId: string, quantity?: number, customPrice?: number | null, quoteId?: string | null) => boolean;
+  removeFromCart: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void; // NUEVA FUNCIÓN
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
-
-const getSessionId = () => {
-  if (typeof window === 'undefined') return '';
-  let sid = localStorage.getItem('nc_session_id');
-  if (!sid) {
-    sid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    localStorage.setItem('nc_session_id', sid);
-  }
-  return sid;
-};
+const CART_STORAGE_KEY = 'dx_local_cart';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<LocalCartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  
-  const supabase = createClient();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const refreshCart = useCallback(async () => {
-    const sessionId = getSessionId();
-    if (!sessionId) return;
-
-    const { data, error } = await supabase
-      .from('cb_cart_items') // ACTUALIZADO
-      .select('*, cb_plans(*)') // ACTUALIZADO
-      .eq('session_id', sessionId) 
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error("Error al obtener el carrito:", error);
-      return;
+  useEffect(() => {
+    const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (storedCart) {
+      try {
+        setItems(JSON.parse(storedCart));
+      } catch (error) {
+        console.error("Error leyendo el carrito local:", error);
+      }
     }
+    setIsInitialized(true);
+  }, []);
 
-    setItems((data as unknown as CartItem[]) || []);
-  }, [supabase]);
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    }
+  }, [items, isInitialized]);
 
-  const addToCart = useCallback(async (planId: string, quantity: number = 1, customPrice: number | null = null, quoteId: string | null = null) => {
-    const sessionId = getSessionId();
-    
-    const { data, error } = await supabase
-      .from('cb_cart_items') // ACTUALIZADO
-      .insert({
-        session_id: sessionId,
-        plan_id: planId, // YA NO SE USA NUMBER
-        quantity: quantity,
+  const addToCart = useCallback((planId: string, quantity: number = 1, customPrice: number | null = null, quoteId: string | null = null) => {
+    setItems((prev) => {
+      // 1. Buscamos coincidencia EXACTA (mismo servicio, mismo precio, misma cotización)
+      const existingItemIndex = prev.findIndex(
+        item => item.plan_id === planId && 
+                item.custom_price === customPrice && 
+                item.quote_id === quoteId
+      );
+
+      if (existingItemIndex >= 0) {
+        // 2. CREACIÓN INMUTABLE: Clonamos el arreglo y el objeto específico para forzar el re-render de React
+        const newItems = [...prev];
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + quantity
+        };
+        return newItems;
+      }
+
+      // 3. Si no existe, agregamos el nuevo item
+      const newItem: LocalCartItem = {
+        id: `cart_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        plan_id: planId,
+        quantity,
         custom_price: customPrice,
         quote_id: quoteId
-      })
-      .select('*, cb_plans(*)')
-      .single();
-
-    if (error || !data) {
-      console.error(" Detalle del error BD:", error?.message || error);
-      return false;
-    }
-
-    setItems((prev) => [data as unknown as CartItem, ...prev]);
+      };
+      
+      return [newItem, ...prev];
+    });
+    
     setIsOpen(true);
     return true;
-  }, [supabase]);
+  }, []);
 
-  const removeFromCart = useCallback(async (cartItemId: string) => {
-    const { error } = await supabase
-      .from('cb_cart_items') // ACTUALIZADO
-      .delete()
-      .eq('id', cartItemId);
+  const removeFromCart = useCallback((cartItemId: string) => {
+    setItems((prev) => prev.filter(item => item.id !== cartItemId));
+  }, []);
 
-    if (error) {
-      console.error("Error al eliminar del carrito:", error);
+  // NUEVA LÓGICA PARA ACTUALIZAR CANTIDAD EN MEMORIA
+  const updateQuantity = useCallback((cartItemId: string, quantity: number) => {
+    if (quantity < 1) {
+      removeFromCart(cartItemId);
       return;
     }
-
-    setItems((prev) => prev.filter(item => item.id !== cartItemId));
-  }, [supabase]);
+    setItems((prev) => prev.map(item => 
+      item.id === cartItemId ? { ...item, quantity } : item
+    ));
+  }, [removeFromCart]);
 
   const clearCart = useCallback(() => {
     setItems([]); 
   }, []);
 
-  useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
-
   const total = useMemo(() => {
     return items.reduce((acc, item) => {
+      const dictionaryPlan = plans.find(p => p.id === item.plan_id);
       const price = item.custom_price !== null 
         ? Number(item.custom_price) 
-        : Number(item.cb_plans?.price || 0);
+        : Number(dictionaryPlan?.price || 0);
         
       return acc + (price * item.quantity);
     }, 0);
@@ -112,12 +117,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     items,
     isOpen,
     setIsOpen,
-    refreshCart,
     clearCart,
     total,
     addToCart,
-    removeFromCart
-  }), [items, isOpen, refreshCart, clearCart, total, addToCart, removeFromCart]);
+    removeFromCart,
+    updateQuantity // EXPORTAMOS LA FUNCIÓN
+  }), [items, isOpen, clearCart, total, addToCart, removeFromCart, updateQuantity]);
 
   return (
     <CartContext.Provider value={value}>

@@ -1,10 +1,10 @@
+// src/lib/mail.ts
 import { Resend } from 'resend';
-import { Checkout, CartItem } from '@/types';
+import { plans } from '@/data/plans'; // Importamos el diccionario estático
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = 'ventas@draxendigital.com'; 
 const INTERNAL_EMAIL = 'info@draxendigital.com';
-
 
 // Paleta Ciber-Audaz adaptada para clientes de correo
 const emailTheme = {
@@ -21,8 +21,8 @@ const emailTheme = {
 // 1. EMAIL DE CHECKOUT (Cliente e Interno)
 // ============================================================================
 export async function sendReceiptEmail(
-  checkout: Checkout, 
-  items: CartItem[], 
+  checkout: any, // Pasamos a 'any' o puedes definir una interfaz local si lo prefieres
+  items: any[], 
   isEnglish: boolean = false,
   currency: string = 'MXN',
   exchangeRate: number = 1
@@ -37,6 +37,20 @@ export async function sendReceiptEmail(
       minimumFractionDigits: 2,
     }).format(finalAmount) + ` ${currency}`;
   };
+
+  // Enriquecemos los items cruzando el ID del carrito con nuestro diccionario local
+  const enrichedItems = items.map(item => {
+    const planDict = plans.find(p => p.id === item.plan_id);
+    const title = planDict 
+        ? (isEnglish ? planDict.en.title : planDict.es.title) 
+        : (isEnglish ? 'Custom Plan' : 'Plan Personalizado');
+    const basePrice = item.custom_price !== null 
+        ? item.custom_price 
+        : (planDict?.price || 0);
+    
+    return { ...item, title, price: basePrice };
+  });
+
   // --- A. PLANTILLA DISRUPTIVA PARA EL CLIENTE ---
   const subjectClient = isEnglish 
     ? `System Activated - Welcome to Draxen Digital` 
@@ -69,20 +83,20 @@ export async function sendReceiptEmail(
             </tr>
           </thead>
           <tbody>
-            ${items.map(item => `
+            ${enrichedItems.map(item => `
               <tr style="border-bottom: 1px solid ${emailTheme.borderDark};">
                 <td style="padding: 15px 0; color: ${emailTheme.textLight}; font-size: 14px; font-weight: 600;">
-                  ${item.cb_plans?.title || 'Custom Plan'}
+                  ${item.quantity > 1 ? `${item.quantity}x ` : ''}${item.title}
                   ${item.quote_id ? `<br><span style="font-size:12px; color:${emailTheme.accentCyan}; font-family: monospace;">Ref: ${item.quote_id}</span>` : ''}
                 </td>
-                <td style="padding: 15px 0; text-align: right; color: ${emailTheme.textLight}; font-size: 14px; font-weight: bold;">${formatCurrency(item.custom_price || item.cb_plans?.price || 0)}</td>
+                <td style="padding: 15px 0; text-align: right; color: ${emailTheme.textLight}; font-size: 14px; font-weight: bold;">${formatCurrency(item.price)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
 
         <div style="background-color: ${emailTheme.cardDark}; border-radius: 12px; padding: 25px; text-align: right; border-left: 4px solid ${emailTheme.accentCyan};">
-          <span style="font-size: 11px; color: ${emailTheme.textMuted}; text-transform: uppercase; letter-spacing: 1px;">Total (IVA Incluido)</span>
+          <span style="font-size: 11px; color: ${emailTheme.textMuted}; text-transform: uppercase; letter-spacing: 1px;">Total (${isEnglish ? 'VAT Included' : 'IVA Incluido'})</span>
           <span style="font-size: 28px; font-weight: 800; color: ${emailTheme.accentMagenta}; display: block; margin-top: 5px;">${formatCurrency(checkout.total_estimado)}</span>
         </div>
       </div>
@@ -104,10 +118,10 @@ export async function sendReceiptEmail(
 
       <h3 style="margin-top: 25px; color: #333;">Detalle del Arsenal Adquirido</h3>
       <ul style="color: #444;">
-        ${items.map(item => `
+        ${enrichedItems.map(item => `
           <li style="margin-bottom: 8px;">
-            ${item.quantity}x <strong>${item.cb_plans?.title || 'Custom Plan'}</strong> 
-            - ${formatCurrency(item.custom_price || item.cb_plans?.price || 0)}
+            ${item.quantity}x <strong>${item.title}</strong> 
+            - ${formatCurrency(item.price)}
           </li>
         `).join('')}
       </ul>

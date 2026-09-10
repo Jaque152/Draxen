@@ -8,39 +8,63 @@ export default async function SolucionesPage({ params }: { params: Promise<{ loc
   const soluciones = [
     {
       icono: <Gauge className="w-10 h-10 text-[var(--accent-cyan)]" />,
-      titulo: "Estrategia digital: Ferrari",
-      resumen: "Velocidad y precisión para alcanzar la meta en tiempo récord mediante análisis de mercado y planes disruptivos.",
-      texto: "Comenzamos analizando tu mercado, competencia y audiencia para identificar oportunidades. Diseñamos estrategias multicanal que combinan redes sociales, publicidad pagada, marketing de contenidos y SEO. Con Ferrari, tu marca toma la delantera en la carrera digital, aumentando visibilidad y engagement de manera sostenida."
+      titulo: isEs ? "Estrategia digital: Ferrari" : "Digital Strategy: Ferrari",
+      resumen: isEs 
+        ? "Velocidad y precisión para alcanzar la meta en tiempo récord mediante análisis de mercado y planes disruptivos." 
+        : "Speed and precision to reach the goal in record time through market analysis and disruptive plans.",
+      texto: isEs 
+        ? "Comenzamos analizando tu mercado, competencia y audiencia para identificar oportunidades. Diseñamos estrategias multicanal que combinan redes sociales, publicidad pagada, marketing de contenidos y SEO. Con Ferrari, tu marca toma la delantera en la carrera digital, aumentando visibilidad y engagement de manera sostenida." 
+        : "We start by analyzing your market, competition, and audience to identify opportunities. We design multi-channel strategies that combine social media, paid advertising, content marketing, and SEO. With Ferrari, your brand takes the lead in the digital race, increasing visibility and engagement in a sustainable way."
     },
     {
       icono: <Gem className="w-10 h-10 text-[var(--accent-purple)]" />,
-      titulo: "Branding y diseño: Lamborghini",
-      resumen: "Poder visual y elegancia. Construimos identidades que reflejan la esencia y personalidad única de tu empresa.",
-      texto: "Creamos identidades visuales completas: logotipos, paletas de color, tipografía y manuales de marca. Fusionamos creatividad y estrategia para construir una narrativa visual que conecte emocionalmente. Tu marca se convierte en un símbolo de reconocimiento y diferenciación duradera."
+      titulo: isEs ? "Branding y diseño: Lamborghini" : "Branding & Design: Lamborghini",
+      resumen: isEs 
+        ? "Poder visual y elegancia. Construimos identidades que reflejan la esencia y personalidad única de tu empresa." 
+        : "Visual power and elegance. We build identities that reflect the unique essence and personality of your company.",
+      texto: isEs 
+        ? "Creamos identidades visuales completas: logotipos, paletas de color, tipografía y manuales de marca. Fusionamos creatividad y estrategia para construir una narrativa visual que conecte emocionalmente. Tu marca se convierte en un símbolo de reconocimiento y diferenciación duradera." 
+        : "We create complete visual identities: logos, color palettes, typography, and brand manuals. We fuse creativity and strategy to build a visual narrative that connects emotionally. Your brand becomes a symbol of recognition and lasting differentiation."
     },
     {
       icono: <Zap className="w-10 h-10 text-[var(--accent-magenta)]" />,
-      titulo: "Marketing de contenidos: Porsche",
-      resumen: "Combustible de alta calidad. Contenido ágil y eficiente enfocado en atraer, educar y fidelizar a tu audiencia.",
-      texto: "Creamos blogs, newsletters, videos e infografías que transmiten mensajes claros. Aplicamos storytelling y técnicas de SEO para optimizar el alcance. Monitoreamos métricas de rendimiento y ajustamos estrategias para mejorar continuamente la eficacia de tus acciones."
+      titulo: isEs ? "Marketing de contenidos: Porsche" : "Content Marketing: Porsche",
+      resumen: isEs 
+        ? "Combustible de alta calidad. Contenido ágil y eficiente enfocado en atraer, educar y fidelizar a tu audiencia." 
+        : "High-quality fuel. Agile and efficient content focused on attracting, educating, and retaining your audience.",
+      texto: isEs 
+        ? "Creamos blogs, newsletters, videos e infografías que transmiten mensajes claros. Aplicamos storytelling y técnicas de SEO para optimizar el alcance. Monitoreamos métricas de rendimiento y ajustamos estrategias para mejorar continuamente la eficacia de tus acciones." 
+        : "We create blogs, newsletters, videos, and infographics that convey clear messages. We apply storytelling and SEO techniques to optimize reach. We monitor performance metrics and adjust strategies to continuously improve the effectiveness of your actions."
     },
     {
       icono: <Target className="w-10 h-10 text-[var(--accent-cyan)]" />,
-      titulo: "Publicidad pagada: Tesla",
-      resumen: "Energía innovadora y precisa. Maximizamos el retorno de inversión con segmentación exacta y conversiones inmediatas.",
-      texto: "Campañas en Google Ads, Facebook e Instagram diseñadas para generar resultados medibles. Aplicamos pruebas A/B y estrategias de remarketing para ajustar anuncios en tiempo real. Tu marca acelera su alcance atrayendo clientes de forma inmediata y sostenible."
+      titulo: isEs ? "Publicidad pagada: Tesla" : "Paid Advertising: Tesla",
+      resumen: isEs 
+        ? "Energía innovadora y precisa. Maximizamos el retorno de inversión con segmentación exacta y conversiones inmediatas." 
+        : "Innovative and precise energy. We maximize return on investment with exact targeting and immediate conversions.",
+      texto: isEs 
+        ? "Campañas en Google Ads, Facebook e Instagram diseñadas para generar resultados medibles. Aplicamos pruebas A/B y estrategias de remarketing para ajustar anuncios en tiempo real. Tu marca acelera su alcance atrayendo clientes de forma inmediata y sostenible." 
+        : "Campaigns on Google Ads, Facebook, and Instagram designed to generate measurable results. We apply A/B testing and remarketing strategies to adjust ads in real-time. Your brand accelerates its reach by attracting customers immediately and sustainably."
     },
     {
       icono: <Share2 className="w-10 h-10 text-[var(--accent-purple)]" />,
-      titulo: "Gestión de redes sociales: Bugatti",
-      resumen: "Estilo y velocidad en el circuito social. Fomentamos el crecimiento de comunidad y relaciones auténticas.",
-      texto: "Gestionamos tus plataformas con precisión. Creamos calendarios de contenido, publicamos material creativo y respondemos a la audiencia estratégicamente. Adaptamos cada publicación al tono de tu marca, garantizando consistencia y relevancia en todos los canales."
+      titulo: isEs ? "Gestión de redes sociales: Bugatti" : "Social Media Management: Bugatti",
+      resumen: isEs 
+        ? "Estilo y velocidad en el circuito social. Fomentamos el crecimiento de comunidad y relaciones auténticas." 
+        : "Style and speed on the social circuit. We foster community growth and authentic relationships.",
+      texto: isEs 
+        ? "Gestionamos tus plataformas con precisión. Creamos calendarios de contenido, publicamos material creativo y respondemos a la audiencia estratégicamente. Adaptamos cada publicación al tono de tu marca, garantizando consistencia y relevancia en todos los canales." 
+        : "We manage your platforms with precision. We create content calendars, publish creative material, and respond to the audience strategically. We adapt each post to your brand's tone, ensuring consistency and relevance across all channels."
     },
     {
       icono: <LineChart className="w-10 h-10 text-[var(--accent-magenta)]" />,
-      titulo: "Análisis y optimización: Jeep",
-      resumen: "Resistencia en cualquier terreno. Supervisamos y ajustamos cada acción para garantizar un rendimiento estable.",
-      texto: "Analizamos métricas de campañas y resultados generales para mejorar continuamente. Identificamos oportunidades de mejora y optimizamos recursos. Tu estrategia digital se vuelve flexible y resistente, lista para superar cualquier desafío del mercado."
+      titulo: isEs ? "Análisis y optimización: Jeep" : "Analysis & Optimization: Jeep",
+      resumen: isEs 
+        ? "Resistencia en cualquier terreno. Supervisamos y ajustamos cada acción para garantizar un rendimiento estable." 
+        : "Resistance on any terrain. We monitor and adjust every action to ensure stable performance.",
+      texto: isEs 
+        ? "Analizamos métricas de campañas y resultados generales para mejorar continuamente. Identificamos oportunidades de mejora y optimizamos recursos. Tu estrategia digital se vuelve flexible y resistente, lista para superar cualquier desafío del mercado." 
+        : "We analyze campaign metrics and overall results to improve continuously. We identify areas for improvement and optimize resources. Your digital strategy becomes flexible and resilient, ready to overcome any market challenge."
     }
   ];
 
@@ -51,11 +75,17 @@ export default async function SolucionesPage({ params }: { params: Promise<{ loc
         {/* Encabezado */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border-[var(--accent-purple)]/30 mb-6">
-            <span className="text-[var(--accent-purple)] uppercase tracking-[0.2em] text-xs font-bold">Portafolio Estratégico</span>
+            <span className="text-[var(--accent-purple)] uppercase tracking-[0.2em] text-xs font-bold">
+              { isEs ? 'Portafolio Estratégico' : 'Strategic Portfolio' }
+            </span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight text-[var(--text-main)]">Soluciones a Tu Medida</h1>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight text-[var(--text-main)]">
+            { isEs ? 'Soluciones a Tu Medida' : 'Solutions Tailored to Your Needs' }
+          </h1>
           <p className="text-xl text-[var(--text-main)]/70 max-w-3xl mx-auto font-medium">
-            Ingeniería de alto rendimiento. Pasa el cursor sobre cada solución para conocer los detalles del motor.
+            { isEs 
+              ? 'Ingeniería de alto rendimiento. Pasa el cursor sobre cada solución para conocer los detalles del motor.' 
+              : 'High-performance engineering. Hover over each solution to learn about the engine details.' }
           </p>
         </div>
 

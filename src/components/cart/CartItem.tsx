@@ -1,98 +1,69 @@
 'use client';
 
-import { useTransition } from 'react';
-import { CartItem } from '@/types';
-import { updateQuantity } from '@/actions/cart'; // Importación correcta del Server Action
-import { useCart } from '@/hooks/use-cart';
-import { Minus, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useLocale } from 'next-intl';
+import { useCart, LocalCartItem } from '@/hooks/use-cart'; // Extraemos de nuestro hook
+import { plans } from '@/data/plans'; // Importamos para obtener título
 import { useCurrency } from '@/hooks/use-currency';
 
-export function CartItemComponent({ item }: { item: CartItem }) {
-  const { refreshCart, removeFromCart } = useCart();
-  const [isPending, startTransition] = useTransition();
+interface CartItemProps {
+  item: LocalCartItem;
+}
+
+export default function CartItem({ item }: CartItemProps) {
+  const { removeFromCart, updateQuantity } = useCart();
+  const { formatPrice } = useCurrency();
   const locale = useLocale();
-  const { formatPrice, isLoading } = useCurrency();
   const isEs = locale === 'es';
 
-  // Usamos cb_plans en lugar de plans_nc
-  const price = item.custom_price !== null ? item.custom_price : (item.cb_plans?.price || 0);  
-
-  const handleUpdateQty = (newQty: number) => {
-    if (newQty < 1) return;
-    startTransition(async () => {
-      await updateQuantity(item.id, newQty);
-      await refreshCart(); // Refrescamos para traer el nuevo total
-    });
-  };
-
-  const handleRemove = () => {
-    startTransition(async () => {
-      await removeFromCart(item.id);
-    });
-  };
+  // Obtenemos los datos del diccionario
+  const planDict = plans.find(p => p.id === item.plan_id);
+  const title = planDict ? (isEs ? planDict.es.title : planDict.en.title) : 'Custom Plan';
+  const price = item.custom_price !== null ? item.custom_price : (planDict?.price || 0);
 
   return (
-    <div className="flex gap-4 p-4 rounded-2xl border border-white/50 glass-panel bg-white/40 relative overflow-hidden group transition-all hover:border-[var(--accent-cyan)]/50 hover:shadow-lg">
-      
-      {isPending && (
-        <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
-          <Loader2 className="w-5 h-5 animate-spin text-[var(--accent-purple)]" />
-        </div>
-      )}
-
-      <div className="flex-1 flex flex-col justify-between">
-        <div className="pr-6">
-          <h4 className="font-bold text-lg text-[var(--text-main)] leading-tight tracking-tight">
-            {item.cb_plans?.title || (isEs ? 'Estrategia Personalizada' : 'Custom Strategy')}
-          </h4>
-          
+    <div className="flex gap-4 py-4 border-b border-[var(--text-main)]/10">
+      <div className="flex-1">
+        <h4 className="font-bold text-[var(--text-main)] mb-1">
+          {title}
           {item.quote_id && (
-            <p className="text-xs text-[var(--accent-purple)] font-bold mt-1 uppercase tracking-wider">
-              {isEs ? 'Folio:' : 'Ref:'} {item.quote_id}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-3 bg-white/50 rounded-full p-1 border border-white/60 shadow-sm">
-            <button
-              onClick={() => handleUpdateQty(item.quantity - 1)}
-              disabled={item.quantity <= 1 || isPending}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[var(--accent-purple)] text-[var(--text-main)]/60 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--text-main)]/60"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-            
-            <span className="font-bold text-sm text-[var(--text-main)] w-4 text-center">
-              {item.quantity}
+            <span className="block text-xs font-normal text-[var(--accent-cyan)] opacity-80 mt-1">
+              Ref: {item.quote_id}
             </span>
-            
+          )}
+        </h4>
+        <div className="text-[var(--accent-magenta)] font-bold">
+          {formatPrice(price)}
+        </div>
+        
+        <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center border border-[var(--text-main)]/20 rounded-lg">
             <button
-              onClick={() => handleUpdateQty(item.quantity + 1)}
-              disabled={isPending}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[var(--accent-purple)] text-[var(--text-main)]/60 hover:text-white transition-colors"
+              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+              className="p-2 hover:text-[var(--accent-cyan)] transition-colors"
+              aria-label="Disminuir cantidad"
             >
-              <Plus className="w-3 h-3" />
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="w-8 text-center font-medium">{item.quantity}</span>
+            <button
+              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+              className="p-2 hover:text-[var(--accent-cyan)] transition-colors"
+              aria-label="Aumentar cantidad"
+            >
+              <Plus className="w-4 h-4" />
             </button>
           </div>
-
-          <div className="text-right">
-            <div className="text-lg font-bold text-[var(--text-main)]">
-              {isLoading ? '...' : formatPrice(price * item.quantity)}
-            </div>
-          </div>
+          
+          <button
+            onClick={() => removeFromCart(item.id)}
+            className="text-[var(--text-main)]/50 hover:text-red-500 transition-colors p-2"
+            aria-label="Eliminar item"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={handleRemove}
-        disabled={isPending}
-        title={isEs ? "Eliminar" : "Remove"}
-        className="absolute top-4 right-4 p-2 text-[var(--text-main)]/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
     </div>
   );
 }

@@ -1,31 +1,24 @@
-import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { AddToCartButton } from './AddToCartButton';
 import { ArrowRight } from 'lucide-react';
 import { ClientPrice } from '@/components/shared/ClientPrice';
+import { plans } from '@/data/plans'; // 1. IMPORTAMOS EL DICCIONARIO LOCAL
 
 export default async function ServicesCatalogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const isEs = locale === 'es';
-  const supabase = await createClient();
 
-  const { data: plans } = await supabase
-    .from('cb_plans')
-    .select('*')
-    .eq('is_active', true)
-    .order('price', { ascending: true });
+  // 2. MAPEO LOCAL: Asignamos el título y descripción correctos según el idioma
+  const localizedPlans = plans.map(plan => ({
+    id: plan.id,
+    price: plan.price,
+    title: isEs ? plan.es.title : plan.en.title,
+    description: isEs ? plan.es.description : plan.en.description
+  }));
 
-  // SOLUCIÓN: Filtro robusto que busca la palabra "personalizado" o "custom" en el título
-  const standardPlans = plans?.filter(plan => 
-    !plan.title.toLowerCase().includes('personalizado') && 
-    !plan.title.toLowerCase().includes('custom')
-  ) || [];
-
-  // Buscamos el plan personalizado para el banner inferior
-  const customPlan = plans?.find(plan => 
-    plan.title.toLowerCase().includes('personalizado') || 
-    plan.title.toLowerCase().includes('custom')
-  );
+  // 3. FILTRO EXACTO: Usamos el ID fijo en lugar de buscar por texto
+  const standardPlans = localizedPlans.filter(plan => plan.id !== 'custom-plan');
+  const customPlan = localizedPlans.find(plan => plan.id === 'custom-plan');
 
   return (
     <main className="min-h-screen bg-mesh pt-32 pb-24 text-[var(--text-main)] relative">
@@ -35,15 +28,15 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
         <div className="text-center max-w-3xl mx-auto mb-20">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border-[var(--accent-cyan)]/30 mb-6">
             <span className="text-[var(--accent-cyan)] uppercase tracking-[0.2em] text-xs font-bold">
-              Fórmulas de Éxito
+              {isEs ? 'Fórmulas de Éxito' : 'Success Formulas'}
             </span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-[var(--text-main)]">
-            El Garage De Opciones
+            {isEs ? 'El Garage De Opciones' : 'The Options Garage'}
           </h1>
         </div>
 
-        {/* Grid de Planes Estándar (Con la info oculta que se revela en Hover) */}
+        {/* Grid de Planes Estándar */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {standardPlans.map((plan) => (
             <div 
@@ -55,7 +48,6 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
                   {plan.title}
                 </h3>
                 
-                {/* REVELACIÓN AL PASAR EL CURSOR (Hover Reveal) */}
                 <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-in-out opacity-0 group-hover:opacity-100">
                   <div className="overflow-hidden">
                     <p className="text-[var(--text-main)]/70 font-medium text-[13px] leading-relaxed pt-2 pb-4">
@@ -71,11 +63,12 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
                     <ClientPrice amount={plan.price} />
                   </span>
                   <span className="text-[10px] text-[var(--text-main)]/50 font-bold uppercase tracking-widest">
-                    + IVA
+                    {isEs ? '+ IVA' : '+ VAT'}
                   </span>
                 </div>
                 
                 <div className="relative z-20">
+                  {/* Ahora pasará un string amigable como 'seo' o 'fotografia-profesional' */}
                   <AddToCartButton planId={plan.id} />
                 </div>
               </div>
@@ -83,14 +76,16 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
           ))}
         </div>
 
-        {/* SECCIÓN PLAN PERSONALIZADO (Separado y Premium) */}
+        {/* SECCIÓN PLAN PERSONALIZADO */}
         {customPlan && (
           <div className="mt-20 glass-panel rounded-[2.5rem] p-10 md:p-14 border border-[var(--accent-cyan)] shadow-2xl flex flex-col md:flex-row items-center justify-between bg-gradient-to-br from-white/60 to-[var(--accent-cyan)]/10 relative overflow-hidden group">
             <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--accent-cyan)]/20 rounded-full blur-[80px] pointer-events-none transition-all duration-500 group-hover:scale-150" />
             
             <div className="mb-8 md:mb-0 max-w-2xl relative z-10">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 border border-[var(--accent-cyan)]/30 mb-4">
-                <span className="text-[var(--accent-cyan)] uppercase tracking-[0.2em] text-xs font-bold">Exclusivo</span>
+                <span className="text-[var(--accent-cyan)] uppercase tracking-[0.2em] text-xs font-bold">
+                  {isEs ? 'Exclusivo' : 'Exclusive'}
+                </span>
               </div>
               <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--text-main)] mb-4 leading-tight">
                 {customPlan.title}
@@ -101,7 +96,6 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
             </div>
 
             <div className="w-full md:w-auto relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              {/* Botón Primario: Iniciar Cotización */}
               <Link 
                 href={`/${locale}/contact`} 
                 className="w-full sm:w-auto bg-[var(--accent-dark)] text-white px-8 md:px-10 py-5 rounded-2xl font-bold text-lg hover:scale-105 hover:shadow-[0_0_30px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-3"
@@ -110,7 +104,6 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
                 <ArrowRight className="w-6 h-6" />
               </Link>
 
-              {/* Botón Secundario: Pagar Cotización */}
               <Link 
                 href={`/${locale}/pricing`} 
                 className="w-full sm:w-auto bg-white/5 backdrop-blur-md border border-[var(--accent-cyan)] text-[var(--text-main)] px-8 md:px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[var(--accent-cyan)] hover:text-[var(--accent-dark)] hover:scale-105 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-3"
@@ -118,7 +111,6 @@ export default async function ServicesCatalogPage({ params }: { params: Promise<
                 {isEs ? 'Pagar Cotización' : 'Pay Quote'}
                 <ArrowRight className="w-6 h-6" />
               </Link>
-              
             </div>
           </div>
         )}

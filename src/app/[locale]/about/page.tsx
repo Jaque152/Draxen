@@ -70,10 +70,10 @@ export default function About() {
                 {isEs ? 'De Motor a Pista' : 'From Engine to Track'}
               </h3>
               <ul className="space-y-6 text-[var(--text-main)]/70 leading-relaxed font-medium">
-                <li><strong className="text-[var(--text-main)]">1. Diagnóstico de Telemetría:</strong> {isEs ? 'Inspeccionamos el estado actual de tu marca y trazamos la ruta más eficiente.' : 'We inspect the current state of your brand and map out the most efficient route.'}</li>
-                <li><strong className="text-[var(--text-main)]">2. Ingeniería y Trazado:</strong> {isEs ? 'Ensamblamos tácticas personalizadas uniendo creatividad con tecnología de punta.' : 'We assemble custom tactics uniting creativity with cutting-edge technology.'}</li>
-                <li><strong className="text-[var(--text-main)]">3. Arranque Oficial:</strong> {isEs ? 'Desplegamos activos visuales y campañas calibradas para conectar con tu público.' : 'We deploy visual assets and calibrated campaigns to connect with your audience.'}</li>
-                <li><strong className="text-[var(--text-main)]">4. Calibración Continua:</strong> {isEs ? 'Monitoreamos los tiempos de vuelta, ajustando tu estrategia para exprimir el máximo rendimiento.' : 'We monitor lap times, adjusting your strategy to squeeze out maximum performance.'}</li>
+                <li><strong className="text-[var(--text-main)]">{isEs ? '1. Diagnóstico de Telemetría:' : '1. Telemetry Diagnosis:'}</strong> {isEs ? 'Inspeccionamos el estado actual de tu marca y trazamos la ruta más eficiente.' : 'We inspect the current state of your brand and map out the most efficient route.'}</li>
+                <li><strong className="text-[var(--text-main)]">{isEs ? '2. Ingeniería y Trazado:' : '2. Engineering and Mapping:'}</strong> {isEs ? 'Ensamblamos tácticas personalizadas uniendo creatividad con tecnología de punta.' : 'We assemble custom tactics uniting creativity with cutting-edge technology.'}</li>
+                <li><strong className="text-[var(--text-main)]">{isEs ? '3. Arranque Oficial:' : '3. Official Launch:'}</strong> {isEs ? 'Desplegamos activos visuales y campañas calibradas para conectar con tu público.' : 'We deploy visual assets and calibrated campaigns to connect with your audience.'}</li>
+                <li><strong className="text-[var(--text-main)]">{isEs ? '4. Calibración Continua:' : '4. Continuous Calibration:'}</strong> {isEs ? 'Monitoreamos los tiempos de vuelta, ajustando tu estrategia para exprimir el máximo rendimiento.' : 'We monitor lap times, adjusting your strategy to squeeze out maximum performance.'}</li>
               </ul>
             </div>
           </motion.div>

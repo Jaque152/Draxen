@@ -1,6 +1,5 @@
 'use server';
-
-import { createClient } from '@/lib/supabase/server';
+import { plans } from '@/data/plans'; // Importamos el diccionario estático
 
 export interface CustomPlanFormData {
   nombre: string;
@@ -12,42 +11,17 @@ export interface CustomPlanFormData {
 
 export async function processCustomPlan(formData: CustomPlanFormData) {
   try {
-    const supabase = await createClient();
+    // 1. Buscamos el plan base en nuestro diccionario local
+    const customPlanConfig = plans.find(p => p.id === 'custom-plan');
 
-    // 1. Buscamos el plan base de manera robusta (acepta cualquiera de los dos nombres)
-    const { data: planData, error: planError } = await supabase
-      .from('cb_plans')
-      .select('id')
-      .or('title.ilike.%Custom Garage%,title.ilike.%personalizado%')
-      .limit(1)
-      .single();
-
-    if (planError || !planData) {
-      console.error("[CRÍTICO] Error al buscar Plan Maestro:", planError);
-      throw new Error("No se encontró la configuración del Plan Personalizado en la base de datos.");
+    if (!customPlanConfig) {
+      throw new Error("No se encontró la configuración del Plan Personalizado en el sistema.");
     }
 
-    // 2. Insertamos la cotización en la tabla recién creada
-    const { error: insertError } = await supabase
-      .from('cb_custom_quotes')
-      .insert({
-        nombre: formData.nombre,
-        apellidos: formData.apellidos,
-        correo_electronico: formData.correo_electronico,
-        id_cotizacion: formData.id_cotizacion, 
-        monto_a_pagar: formData.monto,
-        payment_status: 'pending'
-      });
-
-    if (insertError) {
-      console.error("[CRÍTICO] Error al guardar cotización en cb_custom_quotes:", insertError);
-      throw new Error("Ocurrió un error al registrar la cotización en el servidor.");
-    }
-
-    // 3. Devolvemos la información al frontend para que la agregue al carrito
+    // 2. Retornamos la data para que el frontend lo agregue al LocalStorage
     return { 
       success: true, 
-      planId: planData.id, 
+      planId: customPlanConfig.id, 
       quoteId: formData.id_cotizacion, 
       customPrice: formData.monto 
     };

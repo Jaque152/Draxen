@@ -1,7 +1,15 @@
 'use server';
-import { CheckoutPayload, CartItem, Checkout } from '@/types';
-import { createClient } from '@supabase/supabase-js'; 
+import { CheckoutPayload } from '@/types';
 import { sendReceiptEmail } from '@/lib/mail';
+import { plans } from '@/data/plans';
+
+// Definimos un tipo local para que coincida con lo enviado desde el frontend
+interface CheckoutItem {
+  plan_id: string;
+  quantity: number;
+  custom_price: number | null;
+  quote_id: string | null;
+}
 
 function requireEnvVar(name: string): string {
   const value = process.env[name];
@@ -39,19 +47,13 @@ async function safeEtominFetch(url: string, options: RequestInit, stepName: stri
 
 export async function processCheckout(formData: CheckoutPayload) {
   try {
-    // 1. Extraemos currency y exchangeRate 
     const { locale, contactInfo, billingInfo, cardInfo, items, total, currency = 'MXN', exchangeRate = 1 } = formData;
     
-    const supabaseAdmin = createClient(
-      requireEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
-      requireEnvVar('SUPABASE_SERVICE_ROLE_KEY')
-    );
-
     const ETOMIN_BASE_URL = requireEnvVar('ETOMIN_BASE_URL');
     const ETOMIN_EMAIL = requireEnvVar('ETOMIN_EMAIL');
     const ETOMIN_PASSWORD = requireEnvVar('ETOMIN_PASSWORD');
 
-    // 1. LOGIN
+    // 1. LOGIN EN ETOMIN
     const signinData = await safeEtominFetch(`${ETOMIN_BASE_URL}/signin`, {
       method: 'POST',
       headers: getEtominHeaders(),
@@ -60,7 +62,7 @@ export async function processCheckout(formData: CheckoutPayload) {
 
     if (!signinData.authToken) throw new Error("Credenciales del procesador rechazadas.");
     
-    // 2. TOKENIZAR
+    // 2. TOKENIZAR TARJETA
     const tokenData = await safeEtominFetch(`${ETOMIN_BASE_URL}/card/tokenizer`, {
       method: 'POST',
       headers: getEtominHeaders({ 'Authorization': `Bearer ${signinData.authToken}` }),
@@ -77,22 +79,22 @@ export async function processCheckout(formData: CheckoutPayload) {
     if (!tokenData.cardNumberToken) throw new Error("Tarjeta declinada o inválida.");
 
     // 3. VENTA Y CONVERSIÓN DE DIVISAS
-    const subtotalCalc = total; // Valor base en MXN
+    const subtotalCalc = total; 
     const impuestoCalc = subtotalCalc * 0.16;
     const totalFinalMXN = subtotalCalc + impuestoCalc;
     
     const isUsd = currency === 'USD';
     const etominCurrencyCode = isUsd ? 840 : 484;
-
-    // Calculamos el monto a cobrar en la pasarela en la moneda exacta
     const amountToCharge = isUsd && exchangeRate > 1 
       ? Number((totalFinalMXN / exchangeRate).toFixed(2)) 
       : Number(totalFinalMXN.toFixed(2));
 
+    const orderReferenceId = `DX-${Date.now()}`; // Creamos un ID de orden propio
+
     const salePayload = {
       amount: amountToCharge,
-      currency: etominCurrencyCode, // Código de moneda dinámico
-      reference: `DX-${Date.now()}`, 
+      currency: etominCurrencyCode,
+      reference: orderReferenceId, 
       customerInformation: {
         firstName: contactInfo.firstName,
         lastName: contactInfo.lastName,
@@ -108,16 +110,17 @@ export async function processCheckout(formData: CheckoutPayload) {
         cardNumberToken: tokenData.cardNumberToken,
         cvv: cardInfo.cvv
       },
-      items: items.map((i: CartItem) => {
-        // También convertimos el precio individual para que el desglose de Etomin cuadre
-        const basePrice = i.custom_price !== null ? i.custom_price : (i.cb_plans?.price || 0);
+      items: items.map((i: CheckoutItem) => {
+        // BUSCAMOS LOS DATOS EN EL DICCIONARIO
+        const plan = plans.find(p => p.id === i.plan_id);
+        const basePrice = i.custom_price !== null ? i.custom_price : (plan?.price || 0);
         const itemPrice = isUsd && exchangeRate > 1 ? basePrice / exchangeRate : basePrice;
         
         return {
-          title: i.cb_plans?.title || 'Estrategia Personalizada',
+          title: plan ? plan.en.title : 'Custom Plan', // Etomin procesa mejor en EN
           amount: Number(itemPrice.toFixed(2)),
           quantity: i.quantity,
-          id: i.plan_id.toString() 
+          id: i.plan_id 
         };
       })
     };
@@ -129,51 +132,24 @@ export async function processCheckout(formData: CheckoutPayload) {
     }, 'Procesar Venta');
 
     if (saleData.status !== 'APPROVED') {
-      console.error("\n❌ [ERROR DE ETOMIN DETALLADO]:", JSON.stringify(saleData, null, 2), "\n");
       const reason = saleData.message || saleData.responseCode || "Transacción declinada.";
       throw new Error(`El banco rechazó el pago: ${reason}`);
     }
 
-    // 4. GUARDAR EN BD (Guardamos en MXN como divisa base contable)
-    const { data: checkoutRecord, error: dbError } = await supabaseAdmin
-      .from('cb_orders')
-      .insert({
-        nombre: contactInfo.firstName,
-        apellidos: contactInfo.lastName,
-        pais_region: billingInfo.pais,
-        direccion_calle: billingInfo.direccion,
-        localidad_ciudad: billingInfo.localidad,
-        region_estado: billingInfo.estado,
-        codigo_postal: billingInfo.codigo_postal,
-        telefono: contactInfo.phone,
-        correo_electronico: contactInfo.email,
-        subtotal: subtotalCalc,
-        impuesto: impuestoCalc,
-        total_estimado: totalFinalMXN,
-        status: 'paid'
-      })
-      .select()
-      .single();
+    // 4. CREAMOS UN REGISTRO EN MEMORIA PARA EL CORREO
+    const mockCheckoutRecord = {
+      id: orderReferenceId,
+      nombre: contactInfo.firstName,
+      apellidos: contactInfo.lastName,
+      correo_electronico: contactInfo.email,
+      telefono: contactInfo.phone,
+      subtotal: subtotalCalc,
+      impuesto: impuestoCalc,
+      total_estimado: totalFinalMXN
+    };
 
-    if (dbError || !checkoutRecord) {
-      console.error("[CRÍTICO] Detalle del error al insertar Checkout:", dbError);
-      throw new Error("Pago exitoso, pero falló la generación del recibo.");
-    }
-
-    // 5. GUARDAR ITEMS
-    const checkoutItems = items.map((item: CartItem) => ({
-      order_id: checkoutRecord.id,
-      plan_id: item.plan_id,
-      quantity: item.quantity,
-      custom_price: item.custom_price,
-      quote_id: item.quote_id
-    }));
-
-    const { error: itemsError } = await supabaseAdmin.from('cb_order_items').insert(checkoutItems);
-    if (itemsError) console.error("[CRÍTICO] Detalle del error en Items:", itemsError);
-
-    // 6. ENVIAR CORREO (Pasamos los datos de la divisa para que el correo se envíe visualmente en USD/MXN)
-    await sendReceiptEmail(checkoutRecord as Checkout, items, locale === 'en', currency, exchangeRate);
+    // 5. ENVIAR CORREOS
+    await sendReceiptEmail(mockCheckoutRecord as any, items, locale === 'en', currency, exchangeRate);
 
     return { success: true };
   } catch (error: unknown) {
