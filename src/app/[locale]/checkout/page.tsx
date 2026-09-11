@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartItem, CheckoutPayload } from "@/types";
 import { useCurrency } from '@/hooks/use-currency';
+import { plans } from '@/data/plans'; // 1. IMPORTAMOS EL DICCIONARIO LOCAL
+
 export default function CheckoutContent() {
   const { items, total, clearCart } = useCart();
   const locale = useLocale();
@@ -32,7 +34,8 @@ export default function CheckoutContent() {
     }
   }, []);
 
-  const {currency, exchangeRate, formatPrice, isLoading} = useCurrency();
+  const { currency, exchangeRate, formatPrice, isLoading } = useCurrency();
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -129,7 +132,6 @@ export default function CheckoutContent() {
                     </div>
                     {isEs ? 'Método de Pago Seguro' : 'Secure Payment Method'}
                   </h2>
-                  {/* Asegúrate de que el logo de Etomin se vea bien en fondo claro (quita el invert si es blanco) */}
                   <img src="/etomin_logo.svg" alt="Etomin" className="h-6 opacity-60 mix-blend-multiply" />
                 </div>
                 <div className="grid gap-5 max-w-md">
@@ -156,18 +158,26 @@ export default function CheckoutContent() {
               {isEs ? 'Tu pedido' : 'Your order'}
             </h2>
             <div className="space-y-4 mb-6">
-              {items.map((item: CartItem, idx: number) => (
-                <div key={idx} className="flex justify-between text-sm items-center font-medium">
-                  <span className="text-[var(--text-main)]/60">
-                    {item.cb_plans?.title || (isEs ? 'Personalizado' : 'Custom')}
-                    <span className="text-[var(--accent-purple)] font-bold ml-2">x{item.quantity}</span>
-                  </span>
-                  <span className="font-bold text-[var(--text-main)]">
-                    {isLoading ? '...' : formatPrice((item.custom_price || item.cb_plans?.price || 0) * item.quantity)}
-                  </span>
-                </div>
-              ))}
+              {items.map((item: CartItem, idx: number) => {
+                // 2. BUSCAMOS LOS DATOS EN EL DICCIONARIO
+                const planDict = plans.find(p => p.id === item.plan_id);
+                const title = planDict ? (isEs ? planDict.es.title : planDict.en.title) : (isEs ? 'Personalizado' : 'Custom');
+                const price = item.custom_price !== null ? item.custom_price : (planDict?.price || 0);
+
+                return (
+                  <div key={idx} className="flex justify-between text-sm items-center font-medium">
+                    <span className="text-[var(--text-main)]/60">
+                      {title}
+                      <span className="text-[var(--accent-purple)] font-bold ml-2">x{item.quantity}</span>
+                    </span>
+                    <span className="font-bold text-[var(--text-main)]">
+                      {isLoading ? '...' : formatPrice(price * item.quantity)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
+            
             <div className="border-t border-[var(--text-main)]/10 pt-6 mb-8 font-sans">
               <div className="flex justify-between items-center mb-2 font-medium">
                 <span className="text-[var(--text-main)]/60">Subtotal</span>
@@ -182,7 +192,8 @@ export default function CheckoutContent() {
                 <span>{isLoading ? '...' : formatPrice(total * 1.16)}</span>
               </div>
             </div>
-            <Button type="submit" disabled={isProcessing} className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white font-bold h-14 rounded-xl text-lg shadow-xl shadow-[var(--accent-dark)]/20 transition-all">
+            
+            <Button type="submit" disabled={isProcessing || items.length === 0} className="w-full bg-[var(--accent-dark)] hover:scale-105 text-white font-bold h-14 rounded-xl text-lg shadow-xl shadow-[var(--accent-dark)]/20 transition-all">
               {isProcessing ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : (isEs ? 'PROCESAR PAGO' : 'PROCESS PAYMENT')}
             </Button>
           </div>

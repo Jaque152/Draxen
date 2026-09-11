@@ -18,13 +18,11 @@ export interface Plan {
 
 export interface CartItem {
   id: string; // Cambiado a UUID (string)
-  session_id: string;
   plan_id: string; // Cambiado a UUID (string)
   quantity: number;
   custom_price: number | null; 
   quote_id: string | null;     
   created_at?: string;
-  cb_plans?: Plan; // Actualizado a cb_plans
 }
 
 export interface Checkout {

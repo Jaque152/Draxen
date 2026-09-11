@@ -1,6 +1,7 @@
 // src/lib/mail.ts
 import { Resend } from 'resend';
-import { plans } from '@/data/plans'; // Importamos el diccionario estático
+import { plans } from '@/data/plans';
+import { CartItem, Checkout } from '@/types';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = 'ventas@draxendigital.com'; 
@@ -17,12 +18,13 @@ const emailTheme = {
   borderDark: '#1e293b'
 };
 
+type ReceiptCheckout = Pick<Checkout, 'id' | 'nombre' | 'apellidos' | 'correo_electronico' | 'telefono' | 'subtotal' | 'impuesto' | 'total_estimado'>;
 // ============================================================================
 // 1. EMAIL DE CHECKOUT (Cliente e Interno)
 // ============================================================================
 export async function sendReceiptEmail(
-  checkout: any, // Pasamos a 'any' o puedes definir una interfaz local si lo prefieres
-  items: any[], 
+  checkout: ReceiptCheckout,
+  items: CartItem[], 
   isEnglish: boolean = false,
   currency: string = 'MXN',
   exchangeRate: number = 1

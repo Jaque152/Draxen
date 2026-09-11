@@ -149,7 +149,7 @@ export async function processCheckout(formData: CheckoutPayload) {
     };
 
     // 5. ENVIAR CORREOS
-    await sendReceiptEmail(mockCheckoutRecord as any, items, locale === 'en', currency, exchangeRate);
+    await sendReceiptEmail(mockCheckoutRecord, items, locale === 'en', currency, exchangeRate);
 
     return { success: true };
   } catch (error: unknown) {
